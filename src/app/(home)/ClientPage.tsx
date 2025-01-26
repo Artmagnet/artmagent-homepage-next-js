@@ -1,6 +1,14 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+  memo,
+} from "react";
+import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
 interface Menu {
   name: string;
@@ -8,27 +16,26 @@ interface Menu {
   id?: number;
 }
 
-
-
 export const ClientPage = () => {
   const [menu, setMenu] = useState<Menu[]>([]);
   const [currentMenu, setCurrentMenu] = useState<Menu>();
 
   return (
     <div className="grid grid-cols-[15rem_1fr] h-full">
-      <SideBar
+      <MemoizedSideBar
         menu={menu}
         setMenu={setMenu}
         currentMenu={currentMenu}
         setCurrentMenu={setCurrentMenu}
       />
-      {currentMenu && <div>
-        <Editor />
-      </div>}
+      {currentMenu && <MemoizedEditor currentMenu={currentMenu} />}
     </div>
   );
 };
 
+// ─────────────────────────────────────────────────────────────
+// SideBar 컴포넌트 메모화
+// ─────────────────────────────────────────────────────────────
 const SideBar = ({
   menu,
   setMenu,
@@ -40,38 +47,27 @@ const SideBar = ({
   currentMenu: Menu | undefined;
   setCurrentMenu: Dispatch<SetStateAction<Menu | undefined>>;
 }) => {
-
   const DEFAULT_MENU: Menu = {
-    name: "새페이지",
+    name: "새 페이지",
     categories: [],
   };
 
   const createMenu = (menuId?: number) => {
-    console.log(menuId);
-    
     // 하위 카테고리에 새로운 메뉴 추가
     if (menuId) {
       const menuCopy = [...menu];
-      console.log('menuCopy',menuCopy);
-      
       const index = menuCopy.findIndex((item) => item.id === menuId);
-      // 만약 해당 menuId가 존재한다면(= index >= 0)
       if (index >= 0) {
-        // 하위 카테고리에 새 메뉴 생성
         menuCopy[index].categories.push({
           ...DEFAULT_MENU,
-          id: new Date().getTime(), // 임시로 Date.now() 사용
+          id: new Date().getTime(),
         });
         setMenu(menuCopy);
       }
       return;
     }
-
     // 최상위 메뉴에 새 메뉴 추가
-    setMenu((prev) => [
-      ...prev,
-      { ...DEFAULT_MENU, id: new Date().getTime() },
-    ]);
+    setMenu((prev) => [...prev, { ...DEFAULT_MENU, id: new Date().getTime() }]);
   };
 
   // 클릭한 메뉴를 currentMenu에 저장
@@ -79,33 +75,26 @@ const SideBar = ({
     setCurrentMenu(item);
   };
 
-  const onClickRemoveMenu = (menuId:number,categorieId?:number) =>{
-    
-    if(categorieId){
-      console.log(categorieId);
-      
-      const menuCopy = [...menu]
-      const menuIndex= menuCopy.findIndex(item => item.id === menuId)
-      const  categories =menuCopy[menuIndex].categories.filter(item => item.id !== categorieId)
-      menuCopy[menuIndex].categories = [...categories]
-      setMenu(menuCopy)
-      
-      return
+  const onClickRemoveMenu = (menuId: number, categorieId?: number) => {
+    if (categorieId) {
+      const menuCopy = [...menu];
+      const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
+      const categories = menuCopy[menuIndex].categories.filter(
+        (item) => item.id !== categorieId
+      );
+      menuCopy[menuIndex].categories = [...categories];
+      setMenu(menuCopy);
+      return;
     }
+    setMenu((prev) => prev.filter((item) => item.id !== menuId));
+  };
 
-    setMenu(prev => prev.filter(item => item.id !== menuId))
-
-    
-
-  }
-
-  useEffect(()=>{
-    console.log(menu);
-    
-  },[menu])
+  useEffect(() => {
+    console.log("menu: ", menu);
+  }, [menu]);
 
   return (
-    <div className="flex flex-col border-solid border-2 border-indigo-600 p-4">
+    <div className="flex flex-col border-r-[1px] border-solid border-gray-200 p-4 bg-gray-100">
       <div className="p-2 flex w-full justify-between items-center">
         <span>아트자석</span>
         <button
@@ -145,7 +134,10 @@ const SideBar = ({
                   >
                     추가
                   </button>
-                  <button className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg" onClick={()=>onClickRemoveMenu(item.id)}>
+                  <button
+                    className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
+                    onClick={() => onClickRemoveMenu(item.id)}
+                  >
                     삭제
                   </button>
                 </div>
@@ -173,7 +165,10 @@ const SideBar = ({
                       >
                         <span>{sub.name}</span>
                         <div className="flex gap-2 items-center">
-                          <button className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"  onClick={()=>onClickRemoveMenu(item.id,sub.id)}>
+                          <button
+                            className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
+                            onClick={() => onClickRemoveMenu(item.id, sub.id)}
+                          >
                             삭제
                           </button>
                         </div>
@@ -194,23 +189,33 @@ const SideBar = ({
   );
 };
 
-const Editor = () => {
+// memo로 감싸 최적화
+const MemoizedSideBar = memo(SideBar);
 
+// ─────────────────────────────────────────────────────────────
+// Editor 컴포넌트 메모화
+// ─────────────────────────────────────────────────────────────
+const Editor = ({ currentMenu }: { currentMenu: Menu }) => {
+  const [title, setTitle] = useState(currentMenu.name);
+  const [markdown, setMarkdown] = useState(``);
+  const editorRef = useRef(null);
 
   return (
-  <div className=" grid grid-cols-[15rem_1fr_25rem] h-full">
-    <div className="flex flex-col p-4 border-2 border-solid border-gray-200 h-full">
-      <div className="flex flex-col gap-2">
-        <span>카테고리 이름</span>
-       <input className="h-11 p-2 border-solid border-2 border-gray-200 rounded-lg"/>
+    <div className=" flex flex-col p-4 flex-1 gap-4 ">
+      <div>
+        <input
+          className="w-full text-4xl font-bold outline-none"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="새 페이지"
+        />
       </div>
-     
+      <div className=" overflow-auto h-[92vh] bg-gray-100">
+        <ForwardRefEditor markdown={markdown} onChange={setMarkdown} ref={editorRef} />
+      </div>
     </div>
-    <div className="max-w-[1080px]  w-full h-full p-4 ">
-      sdds
-    </div>
-    <div className="flex flex-col p-4 border-2 border-solid border-gray-200 h-full">
-      sdds
-    </div>
-  </div>);
+  );
 };
+
+// memo로 감싸 최적화
+const MemoizedEditor = memo(Editor);
