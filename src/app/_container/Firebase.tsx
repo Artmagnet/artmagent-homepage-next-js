@@ -2,7 +2,7 @@
 
 import {  ReactNode, useEffect } from "react";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import firebase from "@/util/firebase";
+import firebase from "@/util/firebaseClient";
 
 
 

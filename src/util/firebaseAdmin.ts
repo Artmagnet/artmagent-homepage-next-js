@@ -1,4 +1,5 @@
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -11,7 +12,16 @@ const firebaseConfig = {
   databaseURL: `https://${process.env.FIREBASE_DATABASE_NAME}.firebaseio.com`,
 };
 
-// Firebase 앱 초기화
-const app = initializeApp(firebaseConfig);
+console.log(getApps().length);
 
+
+// Firebase 앱 초기화
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+
+
+const db = getFirestore(app);
+
+
+export {db}
 export default app

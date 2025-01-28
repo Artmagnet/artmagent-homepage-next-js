@@ -201,8 +201,8 @@ export const KitchenSinkToolbar: React.FC = () => {
               <>
                 <UndoRedo />
                 <Separator />
-                {/* <BoldItalicUnderlineToggles /> */}
-                {/* <CodeToggle />
+                <BoldItalicUnderlineToggles />
+                <CodeToggle />
                 <Separator />
                 <StrikeThroughSupSubToggles />
                 <Separator />
@@ -237,7 +237,7 @@ export const KitchenSinkToolbar: React.FC = () => {
                   ]}
                 />
                 <Separator />
-                <InsertFrontmatter /> */}
+                <InsertFrontmatter />
               </>
             )
           }
@@ -250,22 +250,22 @@ export const KitchenSinkToolbar: React.FC = () => {
 // 실제 툴바를 MDXEditor에 끼우는 plugin
 export const ALL_PLUGINS = [
   toolbarPlugin({ toolbarContents: () => <KitchenSinkToolbar /> }),
-  // listsPlugin(),
-  // quotePlugin(),
-  // headingsPlugin({ allowedHeadingLevels: [1, 2, 3] }),
-  // linkPlugin(),
-  // linkDialogPlugin(),
-  // imagePlugin({
-  //   imageAutocompleteSuggestions: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
-  //   imageUploadHandler: async () => Promise.resolve('https://picsum.photos/200/300')
-  // }),
-  // tablePlugin(),
-  // thematicBreakPlugin(),
-  // frontmatterPlugin(),
-  // codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
-  // sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-  // codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'Plain Text', tsx: 'TypeScript', '': 'Unspecified' } }),
-  // directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor, AdmonitionDirectiveDescriptor] }),
-  // diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: 'boo' }),
-  // markdownShortcutPlugin()
+  listsPlugin(),
+  quotePlugin(),
+  headingsPlugin({ allowedHeadingLevels: [1, 2, 3] }),
+  linkPlugin(),
+  linkDialogPlugin(),
+  imagePlugin({
+    imageAutocompleteSuggestions: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
+    imageUploadHandler: async () => Promise.resolve('https://picsum.photos/200/300')
+  }),
+  tablePlugin(),
+  thematicBreakPlugin(),
+  frontmatterPlugin(),
+  codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
+  sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
+  codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'Plain Text', tsx: 'TypeScript', '': 'Unspecified' } }),
+  directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor, AdmonitionDirectiveDescriptor] }),
+  diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: 'boo' }),
+  markdownShortcutPlugin()
 ];

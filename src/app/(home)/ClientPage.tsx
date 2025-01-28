@@ -10,15 +10,24 @@ import React, {
 } from "react";
 import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
+import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { db } from "@/util/firebaseClient";
+import { v4 as uuidv4 } from 'uuid'
+
 interface Menu {
   name: string;
-  categories: Menu[];
-  id?: number;
+  categories?: Menu[];
+  id?: string;
 }
 
-export const ClientPage = () => {
-  const [menu, setMenu] = useState<Menu[]>([]);
+
+
+
+
+export const ClientPage = ({menus}) => {
+  const [menu, setMenu] = useState<Menu[]>([...menus]);
   const [currentMenu, setCurrentMenu] = useState<Menu>();
+
 
   return (
     <div className="grid grid-cols-[15rem_1fr] h-full">
@@ -52,30 +61,65 @@ const SideBar = ({
     categories: [],
   };
 
-  const createMenu = (menuId?: number) => {
+  const createMenu = async (menuId?: number) => {
     // 하위 카테고리에 새로운 메뉴 추가
-    if (menuId) {
-      const menuCopy = [...menu];
-      const index = menuCopy.findIndex((item) => item.id === menuId);
-      if (index >= 0) {
-        menuCopy[index].categories.push({
-          ...DEFAULT_MENU,
-          id: new Date().getTime(),
-        });
-        setMenu(menuCopy);
+    const id = uuidv4()
+    const categorie = {
+        id,
+        name: '새 페이지',
+        timeStamp:new Date().toISOString()
       }
-      return;
-    }
     // 최상위 메뉴에 새 메뉴 추가
-    setMenu((prev) => [...prev, { ...DEFAULT_MENU, id: new Date().getTime() }]);
+    try {
+    if (menuId) {
+        const menuCopy = [...menu];
+        const index = menuCopy.findIndex((item) => item.id === menuId);
+      if (index >= 0) {
+          const menuId = menuCopy[index].id
+        // console.log(menuId);
+        // console.log(id);
+        
+         await setDoc(doc(db,"menus",menuId,"categories",id),categorie)
+           
+        if (menuCopy[index]?.categories) {
+        menuCopy[index].categories = [...menuCopy[index].categories,categorie]
+          
+        } else {
+        menuCopy[index].categories = [categorie]
+        }
+        console.log(menuCopy[index]);
+        
+        setMenu(menuCopy);
+        setCurrentMenu(categorie)
+        }
+        
+        return;
+     
+      }
+      
+   
+    console.log(categorie);
+    
+    await setDoc(doc(db, "menus",id), categorie);
+    setMenu((prev) => [...prev, { ...categorie }]);
+    setCurrentMenu(categorie)
+    } catch (error) {
+      console.log(error);
+      
+    }
   };
+
+  
+
+
+
 
   // 클릭한 메뉴를 currentMenu에 저장
   const onClickSelect = (item: Menu) => {
     setCurrentMenu(item);
   };
 
-  const onClickRemoveMenu = (menuId: number, categorieId?: number) => {
+  const onClickRemoveMenu = async(menuId: number, categorieId?: number) => {
     if (categorieId) {
       const menuCopy = [...menu];
       const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
@@ -83,15 +127,22 @@ const SideBar = ({
         (item) => item.id !== categorieId
       );
       menuCopy[menuIndex].categories = [...categories];
+      await deleteDoc(doc(db,'menus',menuId,'categories',categorieId))
+      
       setMenu(menuCopy);
       return;
     }
+    await deleteDoc(doc(db,'menus',menuId))
+
     setMenu((prev) => prev.filter((item) => item.id !== menuId));
+    
   };
 
   useEffect(() => {
-    console.log("menu: ", menu);
-  }, [menu]);
+    console.log(menu);
+    
+  },[menu])
+
 
   return (
     <div className="flex flex-col border-r-[1px] border-solid border-gray-200 p-4 bg-gray-100">
@@ -200,15 +251,19 @@ const Editor = ({ currentMenu }: { currentMenu: Menu }) => {
   const [markdown, setMarkdown] = useState(``);
   const editorRef = useRef(null);
 
+
   return (
     <div className=" flex flex-col p-4 flex-1 gap-4 ">
-      <div>
+      <div className=" flex justify-between">
         <input
-          className="w-full text-4xl font-bold outline-none"
+          className=" text-4xl font-bold outline-none"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="새 페이지"
         />
+        <button className=" text-l  p-1 rounded-lg font-bold bg-gray-300 text-gray-700">
+          저장
+        </button>
       </div>
       <div className=" overflow-auto h-[92vh] bg-gray-100">
         <ForwardRefEditor markdown={markdown} onChange={setMarkdown} ref={editorRef} />
