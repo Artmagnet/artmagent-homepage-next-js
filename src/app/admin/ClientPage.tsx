@@ -14,17 +14,12 @@ import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "@/util/firebaseClient";
 import { v4 as uuidv4 } from 'uuid'
 
-interface Menu {
-  name: string;
-  categories?: Menu[];
-  id?: string;
-}
 
 
 
 
 
-export const ClientPage = ({menus}) => {
+export const ClientPage = ({menus}:{menus:Menu[]}) => {
   const [menu, setMenu] = useState<Menu[]>([...menus]);
   const [currentMenu, setCurrentMenu] = useState<Menu>();
 
