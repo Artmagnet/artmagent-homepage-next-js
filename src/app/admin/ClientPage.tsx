@@ -7,21 +7,54 @@ import React, {
   useRef,
   useState,
   memo,
+  useCallback,
 } from "react";
 import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
 import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "@/util/firebaseClient";
 import { v4 as uuidv4 } from 'uuid'
-
-
-
+import { FaRegTrashCan } from "react-icons/fa6";
+import { CgMathPlus } from "react-icons/cg";
+import { debounce } from "lodash";
+import { getMenu, updateCategory, updateMenu } from "@/api";
 
 
 
 export const ClientPage = ({menus}:{menus:Menu[]}) => {
   const [menu, setMenu] = useState<Menu[]>([...menus]);
   const [currentMenu, setCurrentMenu] = useState<Menu>();
+
+
+
+
+
+ const handleSaveMenu = useCallback(
+   debounce(async (value) => {
+     try {
+        const newMenu ={ ...currentMenu, name: value }
+       
+        if (currentMenu?.menuId) {
+          updateCategory(currentMenu.menuId,currentMenu.id,newMenu)
+        } else {
+          updateMenu(currentMenu?.id, newMenu)
+        }
+       const fetchMenus = await getMenu()
+       console.log(fetchMenus);
+       
+        setMenu([...fetchMenus])
+     } catch (error) {
+      console.log(error);
+      
+     }
+   
+     
+      // setTitle(value)
+    }, 500), // 500ms 디바운스
+    []
+  );
+
+
 
 
   return (
@@ -32,7 +65,10 @@ export const ClientPage = ({menus}:{menus:Menu[]}) => {
         currentMenu={currentMenu}
         setCurrentMenu={setCurrentMenu}
       />
-      {currentMenu && <MemoizedEditor currentMenu={currentMenu} />}
+      {currentMenu && <MemoizedEditor currentMenu={currentMenu}
+        setCurrentMenu={setCurrentMenu}
+        handleSaveMenu={handleSaveMenu}
+      />}
     </div>
   );
 };
@@ -59,10 +95,10 @@ const SideBar = ({
   const createMenu = async (menuId?: number) => {
     // 하위 카테고리에 새로운 메뉴 추가
     const id = uuidv4()
-    const categorie = {
+    let categorie = {
         id,
         name: '새 페이지',
-        timeStamp:new Date().toISOString()
+        timeStamp:new Date().toISOString(),
       }
     // 최상위 메뉴에 새 메뉴 추가
     try {
@@ -73,8 +109,8 @@ const SideBar = ({
           const menuId = menuCopy[index].id
         // console.log(menuId);
         // console.log(id);
-        
-         await setDoc(doc(db,"menus",menuId,"categories",id),categorie)
+         categorie ={...categorie,menuId}
+         await setDoc(doc(db,"menus",menuId,"categories",id),{...categorie})
            
         if (menuCopy[index]?.categories) {
         menuCopy[index].categories = [...menuCopy[index].categories,categorie]
@@ -133,10 +169,14 @@ const SideBar = ({
     
   };
 
+
+  
   useEffect(() => {
     console.log(menu);
     
   },[menu])
+
+
 
 
   return (
@@ -144,10 +184,10 @@ const SideBar = ({
       <div className="p-2 flex w-full justify-between items-center">
         <span>아트자석</span>
         <button
-          className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
+          className=" hover:bg-gray-200 p-2 gap-1 rounded-lg"
           onClick={() => createMenu()}
         >
-          추가
+          <CgMathPlus/>
         </button>
       </div>
 
@@ -174,17 +214,20 @@ const SideBar = ({
               >
                 <span>{item.name}</span>
                 <div className="flex gap-2 items-center">
+                 
                   <button
-                    className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
-                    onClick={() => createMenu(item.id)}
-                  >
-                    추가
-                  </button>
-                  <button
-                    className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
+                    className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
                     onClick={() => onClickRemoveMenu(item.id)}
                   >
-                    삭제
+                    <FaRegTrashCan/>
+
+                  </button>
+                   <button
+                    className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
+                    onClick={() => createMenu(item.id)}
+                  >
+                                       <CgMathPlus/>
+
                   </button>
                 </div>
               </div>
@@ -212,10 +255,11 @@ const SideBar = ({
                         <span>{sub.name}</span>
                         <div className="flex gap-2 items-center">
                           <button
-                            className="border-solid border-2 border-gray-300 p-1 gap-1 rounded-lg"
+                            className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
                             onClick={() => onClickRemoveMenu(item.id, sub.id)}
                           >
-                            삭제
+                    <FaRegTrashCan/>
+                          
                           </button>
                         </div>
                       </div>
@@ -241,19 +285,26 @@ const MemoizedSideBar = memo(SideBar);
 // ─────────────────────────────────────────────────────────────
 // Editor 컴포넌트 메모화
 // ─────────────────────────────────────────────────────────────
-const Editor = ({ currentMenu }: { currentMenu: Menu }) => {
-  const [title, setTitle] = useState(currentMenu.name);
+const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Menu ,setCurrentMenu:Dispatch<SetStateAction<Menu>>}) => {
   const [markdown, setMarkdown] = useState(``);
   const editorRef = useRef(null);
 
+
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+   setCurrentMenu(prev => ({ ...prev, name: value }))
+   handleSaveMenu(value)
+  };
+
+  
 
   return (
     <div className=" flex flex-col p-4 flex-1 gap-4 ">
       <div className=" flex justify-between">
         <input
           className=" text-4xl font-bold outline-none"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={currentMenu.name}
+          onChange={handleChange}
           placeholder="새 페이지"
         />
         <button className=" text-l  p-1 rounded-lg font-bold bg-gray-300 text-gray-700">
