@@ -11,13 +11,13 @@ import React, {
 } from "react";
 import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
-import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "@/util/firebaseClient";
 import { v4 as uuidv4 } from 'uuid'
 import { FaRegTrashCan } from "react-icons/fa6";
 import { CgMathPlus } from "react-icons/cg";
 import { debounce } from "lodash";
-import { getMenu, updateCategory, updateMenu } from "@/api";
+import { createPost, getMenu, getPost, getPosts, updateCategory, updateMenu, updatePosts } from "@/api";
 
 
 
@@ -32,27 +32,24 @@ export const ClientPage = ({menus}:{menus:Menu[]}) => {
  const handleSaveMenu = useCallback(
    debounce(async (value) => {
      try {
-        const newMenu ={ ...currentMenu, name: value }
-       
+        const newMenu = { ...currentMenu, name: value }
         if (currentMenu?.menuId) {
           updateCategory(currentMenu.menuId,currentMenu.id,newMenu)
         } else {
           updateMenu(currentMenu?.id, newMenu)
         }
+
        const fetchMenus = await getMenu()
-       console.log(fetchMenus);
        
         setMenu([...fetchMenus])
      } catch (error) {
       console.log(error);
-      
      }
-   
-     
       // setTitle(value)
     }, 500), // 500ms 디바운스
     []
   );
+
 
 
 
@@ -98,30 +95,31 @@ const SideBar = ({
     let categorie = {
         id,
         name: '새 페이지',
-        timeStamp:new Date().toISOString(),
+        timeStamp: new Date().toISOString(),
+        active:false,
       }
     // 최상위 메뉴에 새 메뉴 추가
     try {
     if (menuId) {
         const menuCopy = [...menu];
         const index = menuCopy.findIndex((item) => item.id === menuId);
-      if (index >= 0) {
+        if (index >= 0) {
           const menuId = menuCopy[index].id
         // console.log(menuId);
         // console.log(id);
          categorie ={...categorie,menuId}
-         await setDoc(doc(db,"menus",menuId,"categories",id),{...categorie})
+        await setDoc(doc(db,"menus",menuId,"categories",id),{...categorie})
            
         if (menuCopy[index]?.categories) {
         menuCopy[index].categories = [...menuCopy[index].categories,categorie]
-          
         } else {
         menuCopy[index].categories = [categorie]
         }
-        console.log(menuCopy[index]);
         
+        createPost(id)
         setMenu(menuCopy);
         setCurrentMenu(categorie)
+        
         }
         
         return;
@@ -129,9 +127,11 @@ const SideBar = ({
       }
       
    
-    console.log(categorie);
     
-    await setDoc(doc(db, "menus",id), categorie);
+      await setDoc(doc(db, "menus", id), categorie);
+    
+      createPost(id)
+      
     setMenu((prev) => [...prev, { ...categorie }]);
     setCurrentMenu(categorie)
     } catch (error) {
@@ -171,10 +171,6 @@ const SideBar = ({
 
 
   
-  useEffect(() => {
-    console.log(menu);
-    
-  },[menu])
 
 
 
@@ -286,7 +282,12 @@ const MemoizedSideBar = memo(SideBar);
 // Editor 컴포넌트 메모화
 // ─────────────────────────────────────────────────────────────
 const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Menu ,setCurrentMenu:Dispatch<SetStateAction<Menu>>}) => {
-  const [markdown, setMarkdown] = useState(``);
+  const [post, setPost] = useState<{
+    id:string,markdown:string
+  }>({
+    id: currentMenu.id,
+    markdown:``
+  });
   const editorRef = useRef(null);
 
 
@@ -298,6 +299,35 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
 
   
 
+  const callAPI = async () => {
+    try {
+      const newPost = await getPost(currentMenu.id as string)
+      console.log(newPost);
+      setPost(newPost)
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+  
+  const onClickUpdatePost = () => {
+    try {
+      
+      updatePosts(post.id,{markdown:post.markdown})
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+
+  useEffect(() => {
+    if(!currentMenu) return
+    callAPI()
+    //setPost(newPost)
+  },[currentMenu])
+
+
   return (
     <div className=" flex flex-col p-4 flex-1 gap-4 ">
       <div className=" flex justify-between">
@@ -307,12 +337,24 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
           onChange={handleChange}
           placeholder="새 페이지"
         />
-        <button className=" text-l  p-1 rounded-lg font-bold bg-gray-300 text-gray-700">
+        <div className=" h-full flex gap-2">
+          <button
+            onClick={onClickUpdatePost}
+            className="h-full text-l  p-1 rounded-lg font-bold bg-blue-500 text-white">
           저장
         </button>
+        <button className="h-full text-l  p-1 rounded-lg font-bold bg-red-500 text-white">
+          삭제
+        </button>
+        <button className="h-full text-l  p-1 rounded-lg font-bold bg-gray-300 text-gray-700">
+          게시
+        </button>
+
+        </div>
+      
       </div>
       <div className=" overflow-auto h-[92vh] bg-gray-100">
-        <ForwardRefEditor markdown={markdown} onChange={setMarkdown} ref={editorRef} />
+        <ForwardRefEditor markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
       </div>
     </div>
   );
