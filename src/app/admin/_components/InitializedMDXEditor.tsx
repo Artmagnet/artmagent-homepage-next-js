@@ -47,10 +47,13 @@ import {
   DirectiveDescriptor
 } from '@mdxeditor/editor'
 import '@mdxeditor/editor/style.css'
+import './InitializedMDXEditor.modle.css'
+
 import { LeafDirective } from 'mdast-util-directive'
 
 import 'lexical'
 import { AdmonitionKind } from 'lexical'
+
 
 // Only import this to the next file
 export default function InitializedMDXEditor({
@@ -76,6 +79,9 @@ export default function InitializedMDXEditor({
       plugins={ALL_PLUGINS}
       {...props}
       ref={editorRef}
+      className='editor'
+     contentEditableClassName="prose"
+
     />
   );
 }

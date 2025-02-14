@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { FaRegTrashCan } from "react-icons/fa6";
 import { CgMathPlus } from "react-icons/cg";
 import { debounce } from "lodash";
-import { createPost, getMenu, getPost, getPosts, updateCategory, updateMenu, updatePosts } from "@/api";
+import { createPost, getMenu, getPost,  updateCategory, updateMenu, updatePosts } from "@/api";
 
 
 

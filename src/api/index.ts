@@ -83,7 +83,7 @@ export async function updatePosts(postId: string, updatedData: object) {
      console.log(postId,updatedData);
   
   const postRef = doc(db, 'posts', postId)
-  const res = await updateDoc(postRef, updatedData);
+   await updateDoc(postRef, updatedData);
   } catch (error) {
     console.log(error);
     

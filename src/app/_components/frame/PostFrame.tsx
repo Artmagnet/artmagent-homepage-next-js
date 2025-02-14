@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import Header from "../layout/header"
+import Header from "../layout/Header"
 
 const PostFrame = ({ menu ,children}: {
     menu: Menu[]
