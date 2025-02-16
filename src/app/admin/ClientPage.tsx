@@ -278,15 +278,20 @@ const SideBar = ({
 // memo로 감싸 최적화
 const MemoizedSideBar = memo(SideBar);
 
+export interface Post {
+    id?: string;
+    markdown: string;
+    imagesURL:string[],
+  }
+
 // ─────────────────────────────────────────────────────────────
 // Editor 컴포넌트 메모화
 // ─────────────────────────────────────────────────────────────
 const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Menu ,setCurrentMenu:Dispatch<SetStateAction<Menu>>}) => {
-  const [post, setPost] = useState<{
-    id:string,markdown:string
-  }>({
+  const [post, setPost] = useState<Post>({
     id: currentMenu.id,
-    markdown:``
+    markdown: ``,
+    imagesURL:[]
   });
   const editorRef = useRef(null);
 
@@ -302,8 +307,7 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
   const callAPI = async () => {
     try {
       const newPost = await getPost(currentMenu.id as string)
-      console.log(newPost);
-      setPost(newPost)
+      setPost(prev=>({...prev,...newPost}))
     } catch (error) {
       console.log(error);
       
@@ -312,14 +316,29 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
   
   const onClickUpdatePost = () => {
     try {
+
+      const urlRegex = /https?:\/\/[^\s)]+/g;
+      // MDX IMG URL 추출출
+      const extractedUrls = post.markdown.match(urlRegex) || [];
+      const cleanedUrls = extractedUrls.map(url => url.replace(/\\&/g, "&"));
+      //사용되지 않은 IMG URL
+      const netuseImagesURL = post.imagesURL.filter(item => cleanedUrls.indexOf(item) === -1)
+      console.log(netuseImagesURL);
       
-      updatePosts(post.id,{markdown:post.markdown})
+      
+
+      //updatePosts(post.id,{markdown:post.markdown,imagesURL:post.imagesURL})
       
     } catch (error) {
       console.log(error);
       
     }
   }
+
+  useEffect(() => {
+    console.log(post);
+    
+  },[post])
 
   useEffect(() => {
     if(!currentMenu) return
@@ -354,7 +373,7 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
       
       </div>
       <div className=" overflow-auto h-[92vh] bg-gray-100">
-        <ForwardRefEditor markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
+        <ForwardRefEditor setPost={setPost}  markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
       </div>
     </div>
   );

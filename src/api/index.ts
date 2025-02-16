@@ -1,5 +1,6 @@
-import { db } from "@/util/firebaseClient";
+import { db, storage } from "@/util/firebaseClient";
 import { getDocs, collection, updateDoc, doc, setDoc, getDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
 /**메뉴 가져오기 */
 export async function getMenu() {
@@ -91,3 +92,34 @@ export async function updatePosts(postId: string, updatedData: object) {
  
   
 }
+
+
+
+export async function uploadFile (file:File) {
+  if (!file) return;
+
+  const storageRef = ref(storage, `images/${file.name}`); // 파일 경로 설정 (images 폴더 안에 저장)
+
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  return new Promise((resolve, reject) => {
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        // 업로드 진행 상황 관찰 (옵션)
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Upload is ' + progress + '% done');
+        // ...
+      },
+      (error) => {
+        // 업로드 에러 처리
+        reject(error);
+      },
+      () => {
+        // 업로드 성공 후 다운로드 URL 가져오기
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          resolve(downloadURL);
+        });
+      }
+    );
+  });
+};

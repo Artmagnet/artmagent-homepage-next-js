@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useMemo, useState, type ForwardedRef, memo } from 'react'
+import React, { useEffect, useMemo, useState, type ForwardedRef, memo, Dispatch, SetStateAction } from 'react'
 import {
   headingsPlugin,
   listsPlugin,
@@ -53,13 +53,20 @@ import { LeafDirective } from 'mdast-util-directive'
 
 import 'lexical'
 import { AdmonitionKind } from 'lexical'
+import { uploadFile } from '@/api'
+import { Post } from '../ClientPage'
 
 
 // Only import this to the next file
 export default function InitializedMDXEditor({
-    editorRef,
+  editorRef,
+  setPost,
     ...props
-}: { editorRef: ForwardedRef<MDXEditorMethods> | null } & MDXEditorProps) {
+}: {
+  editorRef: ForwardedRef<MDXEditorMethods> | null;
+  setPost:Dispatch<SetStateAction<Post>>
+ } & MDXEditorProps) {
+
   const [selectFormatting, setSelectFormatting] = useState('title_1');
 
   const [fontFormatting, setFontFormatting] = useState([
@@ -74,9 +81,23 @@ export default function InitializedMDXEditor({
     setSelectFormatting(fontFormat?.value as string);
   };
 
+  
+  const imageUploadHandler = async (file:File):Promise<unknown> => {
+    
+    const res = await uploadFile(file)
+    setPost(prev => ({
+      ...prev,imagesURL:[...prev.imagesURL,res]
+    }))
+    
+    return Promise.resolve(res)
+  }
+
   return (
     <MDXEditor
-      plugins={ALL_PLUGINS}
+      plugins={[...ALL_PLUGINS,  imagePlugin({
+        imageUploadHandler,
+        
+      })]}
       {...props}
       ref={editorRef}
       className='editor'
@@ -208,9 +229,9 @@ export const KitchenSinkToolbar: React.FC = () => {
                 <UndoRedo />
                 <Separator />
                 <BoldItalicUnderlineToggles />
-                <CodeToggle />
-                <Separator />
-                <StrikeThroughSupSubToggles />
+                {/* <CodeToggle /> */}
+                {/* <Separator /> */}
+                {/* <StrikeThroughSupSubToggles /> */}
                 <Separator />
                 <ListsToggle />
                 <Separator />
@@ -226,9 +247,9 @@ export const KitchenSinkToolbar: React.FC = () => {
                 <Separator />
                 <InsertTable />
                 <InsertThematicBreak />
-                <Separator />
-                <InsertCodeBlock />
-                <InsertSandpack />
+                {/* <Separator /> */}
+                {/* <InsertCodeBlock /> */}
+                {/* <InsertSandpack /> */}
                 <ConditionalContents
                   options={[
                     {
@@ -242,8 +263,8 @@ export const KitchenSinkToolbar: React.FC = () => {
                     }
                   ]}
                 />
-                <Separator />
-                <InsertFrontmatter />
+                {/* <Separator />
+                <InsertFrontmatter /> */}
               </>
             )
           }
@@ -261,10 +282,6 @@ export const ALL_PLUGINS = [
   headingsPlugin({ allowedHeadingLevels: [1, 2, 3] }),
   linkPlugin(),
   linkDialogPlugin(),
-  imagePlugin({
-    imageAutocompleteSuggestions: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
-    imageUploadHandler: async () => Promise.resolve('https://picsum.photos/200/300')
-  }),
   tablePlugin(),
   thematicBreakPlugin(),
   frontmatterPlugin(),
