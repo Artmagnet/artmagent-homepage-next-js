@@ -1,6 +1,6 @@
 import { db, storage } from "@/util/firebaseClient";
 import { getDocs, collection, updateDoc, doc, setDoc, getDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
 /**메뉴 가져오기 */
 export async function getMenu() {
@@ -34,8 +34,8 @@ export async function getMenu() {
 /**메뉴 업데이트 */
 export async function updateMenu(menuId:string, updatedData:object) {
   try {
-    console.log(menuId,updatedData);
-    
+      console.log(menuId, updatedData);
+      
       const menuRef = doc(db, "menus", menuId);
       await updateDoc(menuRef, updatedData);
     
@@ -123,3 +123,46 @@ export async function uploadFile (file:File) {
     );
   });
 };
+
+
+
+export async function deleteFile(fileName: string) {
+  if (!fileName) return;
+
+  const fileRef = ref(storage, `images/${fileName}`); // 삭제할 파일의 경로 설정
+
+  return new Promise<void>((resolve, reject) => {
+    deleteObject(fileRef)
+      .then(() => {
+        console.log(`File ${fileName} deleted successfully`);
+        resolve();
+      })
+      .catch((error) => {
+        console.error(`Error deleting file ${fileName}:`, error);
+        reject(error);
+      });
+  });
+}
+
+export async function deleteFiles(fileNames: string[]) {
+  if (!fileNames || fileNames.length === 0) return;
+
+  const deletePromises = fileNames.map((fileName) => {
+    const fileRef = ref(storage, `${fileName}`);
+    return deleteObject(fileRef)
+      .then(() => {
+        console.log(`File ${fileName} deleted successfully`);
+      })
+      .catch((error) => {
+        console.error(`Error deleting file ${fileName}:`, error);
+      });
+  });
+
+  return Promise.all(deletePromises)
+    .then(() => {
+      console.log("All files deleted successfully");
+    })
+    .catch((error) => {
+      console.error("Error deleting some files:", error);
+    });
+}

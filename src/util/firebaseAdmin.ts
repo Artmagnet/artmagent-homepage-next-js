@@ -12,7 +12,6 @@ const firebaseConfig = {
   databaseURL: `https://${process.env.FIREBASE_DATABASE_NAME}.firebaseio.com`,
 };
 
-console.log(getApps().length);
 
 
 // Firebase 앱 초기화

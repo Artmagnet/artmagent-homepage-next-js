@@ -60,11 +60,9 @@ import { Post } from '../ClientPage'
 // Only import this to the next file
 export default function InitializedMDXEditor({
   editorRef,
-  setPost,
     ...props
 }: {
   editorRef: ForwardedRef<MDXEditorMethods> | null;
-  setPost:Dispatch<SetStateAction<Post>>
  } & MDXEditorProps) {
 
   const [selectFormatting, setSelectFormatting] = useState('title_1');
@@ -85,9 +83,7 @@ export default function InitializedMDXEditor({
   const imageUploadHandler = async (file:File):Promise<unknown> => {
     
     const res = await uploadFile(file)
-    setPost(prev => ({
-      ...prev,imagesURL:[...prev.imagesURL,res]
-    }))
+   
     
     return Promise.resolve(res)
   }

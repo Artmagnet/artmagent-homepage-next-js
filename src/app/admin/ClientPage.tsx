@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { FaRegTrashCan } from "react-icons/fa6";
 import { CgMathPlus } from "react-icons/cg";
 import { debounce } from "lodash";
-import { createPost, getMenu, getPost,  updateCategory, updateMenu, updatePosts } from "@/api";
+import { createPost, deleteFiles, getMenu, getPost,  updateCategory, updateMenu, updatePosts } from "@/api";
 
 
 
@@ -29,10 +29,14 @@ export const ClientPage = ({menus}:{menus:Menu[]}) => {
 
 
 
- const handleSaveMenu = useCallback(
+ const handleSaveMenu = 
    debounce(async (value) => {
+     
      try {
-        const newMenu = { ...currentMenu, name: value }
+       
+       
+       const newMenu = { ...currentMenu, name: value }
+       
         if (currentMenu?.menuId) {
           updateCategory(currentMenu.menuId,currentMenu.id,newMenu)
         } else {
@@ -46,9 +50,8 @@ export const ClientPage = ({menus}:{menus:Menu[]}) => {
       console.log(error);
      }
       // setTitle(value)
-    }, 500), // 500ms 디바운스
-    []
-  );
+    }, 500) // 500ms 디바운스
+   
 
 
 
@@ -105,8 +108,7 @@ const SideBar = ({
         const index = menuCopy.findIndex((item) => item.id === menuId);
         if (index >= 0) {
           const menuId = menuCopy[index].id
-        // console.log(menuId);
-        // console.log(id);
+   
          categorie ={...categorie,menuId}
         await setDoc(doc(db,"menus",menuId,"categories",id),{...categorie})
            
@@ -288,6 +290,8 @@ export interface Post {
 // Editor 컴포넌트 메모화
 // ─────────────────────────────────────────────────────────────
 const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Menu ,setCurrentMenu:Dispatch<SetStateAction<Menu>>}) => {
+  const [isFetch,setIsFetch] = useState(false)
+  
   const [post, setPost] = useState<Post>({
     id: currentMenu.id,
     markdown: ``,
@@ -306,15 +310,38 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
 
   const callAPI = async () => {
     try {
+      setIsFetch(false)
+      
+      
       const newPost = await getPost(currentMenu.id as string)
-      setPost(prev=>({...prev,...newPost}))
+      console.log(newPost);
+      
+      setPost(newPost)
     } catch (error) {
       console.log(error);
       
+    } finally {
+      setIsFetch(true)
     }
   }
   
-  const onClickUpdatePost = () => {
+ const extractFileName =(fileUrl: string): string | null  =>{
+  try {
+    const decodedUrl = decodeURIComponent(fileUrl); // URL 디코딩
+    const match = decodedUrl.match(/\/o\/([^?]+)/); // "o/" 이후의 경로 추출
+
+    if (match && match[1]) {
+      return match[1]; // "images/파일명" 반환
+    }
+    return null;
+  } catch (error) {
+    console.error("Error extracting file name:", error);
+    return null;
+  }
+}
+
+
+  const onClickUpdatePost = async () => {
     try {
 
       const urlRegex = /https?:\/\/[^\s)]+/g;
@@ -323,11 +350,14 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
       const cleanedUrls = extractedUrls.map(url => url.replace(/\\&/g, "&"));
       //사용되지 않은 IMG URL
       const netuseImagesURL = post.imagesURL.filter(item => cleanedUrls.indexOf(item) === -1)
-      console.log(netuseImagesURL);
+      const extractFileNames = netuseImagesURL.map(item => extractFileName(item))
+      if (extractFileNames.length > 0) {
+        await deleteFiles(extractFileNames)
+      }
       
       
 
-      //updatePosts(post.id,{markdown:post.markdown,imagesURL:post.imagesURL})
+      await updatePosts(post.id,{markdown:post.markdown,imagesURL:[...cleanedUrls]})
       
     } catch (error) {
       console.log(error);
@@ -373,7 +403,9 @@ const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Me
       
       </div>
       <div className=" overflow-auto h-[92vh] bg-gray-100">
-        <ForwardRefEditor setPost={setPost}  markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
+        {isFetch && 
+        <ForwardRefEditor   markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
+        }
       </div>
     </div>
   );
