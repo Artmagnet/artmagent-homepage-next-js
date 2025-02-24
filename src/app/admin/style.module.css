@@ -1,0 +1,79 @@
+/* ClientPage.module.css */
+.gridContainer {
+  @apply grid grid-cols-[1fr_1280px] h-full;
+}
+
+/* ───────────────────────────────────────────
+   SideBar 관련 스타일
+   ─────────────────────────────────────────── */
+.sideBarContainer {
+  @apply flex flex-col border-r border-solid border-gray-200 p-4 bg-gray-100;
+}
+
+.sidebarHeader {
+  @apply p-2 flex w-full justify-between items-center;
+}
+
+.sidebarHeaderTitle {
+  @apply font-bold;
+}
+
+.sidebarHeaderButton {
+  @apply hover:bg-gray-200 p-2 gap-1 rounded-lg;
+}
+
+.menuWrapper {
+  @apply flex flex-col;
+}
+
+.menuButton {
+  @apply cursor-pointer border-gray-200 p-2 flex justify-between items-center hover:bg-gray-100 rounded-lg;
+}
+
+/* currentMenu 선택 시 배경색 */
+.menuButtonActive {
+  @apply bg-gray-200;
+}
+
+.subMenuList {
+  @apply flex flex-col pl-4;
+}
+
+/* ───────────────────────────────────────────
+   Editor 관련 스타일
+   ─────────────────────────────────────────── */
+.editorContainer {
+  @apply flex flex-col p-4 flex-1 gap-4;
+}
+
+.editorHeader {
+  @apply flex justify-between;
+}
+
+.editorTitle {
+  @apply text-4xl font-bold outline-none;
+}
+
+.editorButtonsContainer {
+  @apply h-full flex gap-2;
+}
+
+.editorBtnSave {
+  @apply h-full text-lg p-1 rounded-lg font-bold bg-blue-500 text-white;
+}
+
+.editorBtnDelete {
+  @apply h-full text-lg p-1 rounded-lg font-bold bg-red-500 text-white;
+}
+
+.editorBtnPublish {
+  @apply h-full text-lg p-1 rounded-lg font-bold bg-gray-300 text-gray-700;
+}
+
+.editorContent {
+  @apply overflow-auto h-[92vh] bg-gray-100;
+}
+
+.emptyMenu {
+  @apply flex items-center justify-center;
+}

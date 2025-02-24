@@ -7,74 +7,88 @@ import React, {
   useRef,
   useState,
   memo,
-  useCallback,
 } from "react";
+import classNames from "classnames";
 import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
 import { deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "@/util/firebaseClient";
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from "uuid";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { CgMathPlus } from "react-icons/cg";
 import { debounce } from "lodash";
-import { createPost, deleteFiles, getMenu, getPost,  updateCategory, updateMenu, updatePosts } from "@/api";
+import {
+  createPost,
+  deleteFiles,
+  getMenu,
+  getPost,
+  updateCategory,
+  updateMenu,
+  updatePosts,
+} from "@/api";
 
+import styles from "./style.module.css";
 
+export interface Menu {
+  id: string;
+  name: string;
+  menuId?: string | number;
+  active?: boolean;
+  categories?: Menu[];
+  timeStamp?: string;
+}
 
-export const ClientPage = ({menus}:{menus:Menu[]}) => {
+interface Post {
+  id?: string;
+  markdown: string;
+  imagesURL: string[];
+}
+
+export const ClientPage = ({ menus }: { menus: Menu[] }) => {
   const [menu, setMenu] = useState<Menu[]>([...menus]);
   const [currentMenu, setCurrentMenu] = useState<Menu>();
 
+  // 메뉴 이름 디바운스 업데이트
+  const handleSaveMenu = debounce(async (value: string) => {
+    try {
+      const newMenu = { ...currentMenu, name: value };
+      if (currentMenu?.menuId) {
+        // 하위 카테고리 업데이트
+        await updateCategory(currentMenu.menuId, currentMenu.id, newMenu);
+      } else {
+        // 최상위 메뉴 업데이트
+        await updateMenu(currentMenu?.id, newMenu);
+      }
 
-
-
-
- const handleSaveMenu = 
-   debounce(async (value) => {
-     
-     try {
-       
-       
-       const newMenu = { ...currentMenu, name: value }
-       
-        if (currentMenu?.menuId) {
-          updateCategory(currentMenu.menuId,currentMenu.id,newMenu)
-        } else {
-          updateMenu(currentMenu?.id, newMenu)
-        }
-
-       const fetchMenus = await getMenu()
-       
-        setMenu([...fetchMenus])
-     } catch (error) {
+      // 업데이트된 메뉴 다시 fetch
+      const fetchMenus = await getMenu();
+      setMenu([...fetchMenus]);
+    } catch (error) {
       console.log(error);
-     }
-      // setTitle(value)
-    }, 500) // 500ms 디바운스
-   
-
-
-
-
+    }
+  }, 500);
 
   return (
-    <div className="grid grid-cols-[15rem_1fr] h-full">
+    <div className={styles.gridContainer}>
       <MemoizedSideBar
         menu={menu}
         setMenu={setMenu}
         currentMenu={currentMenu}
         setCurrentMenu={setCurrentMenu}
       />
-      {currentMenu && <MemoizedEditor currentMenu={currentMenu}
-        setCurrentMenu={setCurrentMenu}
-        handleSaveMenu={handleSaveMenu}
-      />}
+      {currentMenu && (
+        <MemoizedEditor
+          currentMenu={currentMenu}
+          setCurrentMenu={setCurrentMenu}
+          handleSaveMenu={handleSaveMenu}
+        />
+      )}
     </div>
   );
 };
 
 // ─────────────────────────────────────────────────────────────
-// SideBar 컴포넌트 메모화
+// SideBar 컴포넌트
 // ─────────────────────────────────────────────────────────────
 const SideBar = ({
   menu,
@@ -87,189 +101,165 @@ const SideBar = ({
   currentMenu: Menu | undefined;
   setCurrentMenu: Dispatch<SetStateAction<Menu | undefined>>;
 }) => {
-  const DEFAULT_MENU: Menu = {
-    name: "새 페이지",
-    categories: [],
-  };
+  const createMenu = async (menuId?: string | number) => {
+    const id = uuidv4();
+    let newPage = {
+      id,
+      name: "새 페이지",
+      timeStamp: new Date().toISOString(),
+      active: false,
+    };
 
-  const createMenu = async (menuId?: number) => {
-    // 하위 카테고리에 새로운 메뉴 추가
-    const id = uuidv4()
-    let categorie = {
-        id,
-        name: '새 페이지',
-        timeStamp: new Date().toISOString(),
-        active:false,
-      }
-    // 최상위 메뉴에 새 메뉴 추가
     try {
-    if (menuId) {
+      // (1) 하위 카테고리 생성
+      if (menuId) {
         const menuCopy = [...menu];
         const index = menuCopy.findIndex((item) => item.id === menuId);
         if (index >= 0) {
-          const menuId = menuCopy[index].id
-   
-         categorie ={...categorie,menuId}
-        await setDoc(doc(db,"menus",menuId,"categories",id),{...categorie})
-           
-        if (menuCopy[index]?.categories) {
-        menuCopy[index].categories = [...menuCopy[index].categories,categorie]
-        } else {
-        menuCopy[index].categories = [categorie]
+          const parentId = menuCopy[index].id; // 상위 메뉴 id
+          newPage = { ...newPage, menuId: parentId };
+
+          // Firebase 저장
+          await setDoc(doc(db, "menus", parentId, "categories", id), {
+            ...newPage,
+          });
+          // 로컬 state 업데이트
+          if (menuCopy[index]?.categories) {
+            menuCopy[index].categories.push(newPage);
+          } else {
+            menuCopy[index].categories = [newPage];
+          }
+          // 문서(게시글)도 생성
+          await createPost(id);
+          setMenu(menuCopy);
+          setCurrentMenu(newPage);
         }
-        
-        createPost(id)
-        setMenu(menuCopy);
-        setCurrentMenu(categorie)
-        
-        }
-        
         return;
-     
       }
-      
-   
-    
-      await setDoc(doc(db, "menus", id), categorie);
-    
-      createPost(id)
-      
-    setMenu((prev) => [...prev, { ...categorie }]);
-    setCurrentMenu(categorie)
+
+      // (2) 최상위 메뉴 생성
+      await setDoc(doc(db, "menus", id), newPage);
+      // 문서(게시글)도 생성
+      await createPost(id);
+
+      setMenu((prev) => [...prev, { ...newPage }]);
+      setCurrentMenu(newPage);
     } catch (error) {
       console.log(error);
-      
     }
   };
-
-  
-
-
-
 
   // 클릭한 메뉴를 currentMenu에 저장
   const onClickSelect = (item: Menu) => {
     setCurrentMenu(item);
   };
 
-  const onClickRemoveMenu = async(menuId: number, categorieId?: number) => {
-    if (categorieId) {
-      const menuCopy = [...menu];
-      const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
-      const categories = menuCopy[menuIndex].categories.filter(
-        (item) => item.id !== categorieId
-      );
-      menuCopy[menuIndex].categories = [...categories];
-      await deleteDoc(doc(db,'menus',menuId,'categories',categorieId))
-      
-      setMenu(menuCopy);
-      return;
-    }
-    await deleteDoc(doc(db,'menus',menuId))
+  // 메뉴/카테고리 삭제
+  const onClickRemoveMenu = async (menuId: string, categorieId?: string) => {
+    try {
+      if (categorieId) {
+        // 하위 카테고리 삭제
+        const menuCopy = [...menu];
+        const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
+        if (menuIndex === -1) {return;}
 
-    setMenu((prev) => prev.filter((item) => item.id !== menuId));
-    
+        const filtered = menuCopy[menuIndex].categories?.filter(
+          (item) => item.id !== categorieId
+        );
+        menuCopy[menuIndex].categories = filtered || [];
+
+        await deleteDoc(doc(db, "menus", menuId, "categories", categorieId));
+        setMenu(menuCopy);
+        return;
+      }
+
+      // 최상위 메뉴 삭제
+      await deleteDoc(doc(db, "menus", menuId));
+      setMenu((prev) => prev.filter((item) => item.id !== menuId));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-
-  
-
-
-
-
   return (
-    <div className="flex flex-col border-r-[1px] border-solid border-gray-200 p-4 bg-gray-100">
-      <div className="p-2 flex w-full justify-between items-center">
-        <span>아트자석</span>
+    <div className={styles.sideBarContainer}>
+      <div className={styles.sidebarHeader}>
+        <span className={styles.sidebarHeaderTitle}>아트자석</span>
         <button
-          className=" hover:bg-gray-200 p-2 gap-1 rounded-lg"
+          className={styles.sidebarHeaderButton}
           onClick={() => createMenu()}
         >
-          <CgMathPlus/>
+          <CgMathPlus />
         </button>
       </div>
 
-      {/* 메뉴가 존재할 때 */}
       {menu.length > 0 ? (
         <>
           {menu.map((item) => (
-            <div key={item.id} className="flex flex-col">
-              {/* 최상위 메뉴 */}
+            <div key={item.id} className={styles.menuWrapper}>
+              {/* ─── 최상위 메뉴 ───────────────────────────── */}
               <div
-                className={`
-                  cursor-pointer
-                  border-gray-200
-                  p-2 flex justify-between items-center
-                  hover:bg-gray-100
-                  rounded-lg
-                  ${
-                    currentMenu?.id === item.id
-                      ? "bg-gray-200" // 선택된 메뉴일 때 색상
-                      : ""
-                  }
-                `}
+                className={classNames(styles.menuButton, {
+                  [styles.menuButtonActive]: currentMenu?.id === item.id,
+                })}
                 onClick={() => onClickSelect(item)}
               >
                 <span>{item.name}</span>
                 <div className="flex gap-2 items-center">
-                 
                   <button
-                    className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
-                    onClick={() => onClickRemoveMenu(item.id)}
+                    className={styles.sidebarHeaderButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClickRemoveMenu(item.id);
+                    }}
                   >
-                    <FaRegTrashCan/>
-
+                    <FaRegTrashCan />
                   </button>
-                   <button
-                    className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
-                    onClick={() => createMenu(item.id)}
+                  <button
+                    className={styles.sidebarHeaderButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      createMenu(item.id);
+                    }}
                   >
-                                       <CgMathPlus/>
-
+                    <CgMathPlus />
                   </button>
                 </div>
               </div>
 
-              {/* 하위 카테고리가 있을 때 */}
-              {item.categories?.length > 0 && (
-                <ul className="flex flex-col pl-3">
+              {/* ─── 하위 카테고리 ─────────────────────────── */}
+              {item.categories?.length ? (
+                <ul className={styles.subMenuList}>
                   {item.categories.map((sub) => (
                     <li key={sub.id}>
                       <div
-                        className={`
-                          cursor-pointer
-                          border-gray-200
-                          p-2 flex justify-between items-center
-                          hover:bg-gray-100
-                          rounded-lg
-                          ${
-                            currentMenu?.id === sub.id
-                              ? "bg-gray-200" // 선택된 서브 메뉴일 때 색상
-                              : ""
-                          }
-                        `}
+                        className={classNames(styles.menuButton, {
+                          [styles.menuButtonActive]: currentMenu?.id === sub.id,
+                        })}
                         onClick={() => onClickSelect(sub)}
                       >
                         <span>{sub.name}</span>
                         <div className="flex gap-2 items-center">
                           <button
-                            className="hover:bg-gray-200 p-2 gap-1 rounded-lg"
-                            onClick={() => onClickRemoveMenu(item.id, sub.id)}
+                            className={styles.sidebarHeaderButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onClickRemoveMenu(item.id, sub.id);
+                            }}
                           >
-                    <FaRegTrashCan/>
-                          
+                            <FaRegTrashCan />
                           </button>
                         </div>
                       </div>
                     </li>
                   ))}
                 </ul>
-              )}
+              ) : null}
             </div>
           ))}
         </>
       ) : (
-        <div className="flex items-center justify-center">
+        <div className={styles.emptyMenu}>
           <span>메뉴를 만들어 주세요.</span>
         </div>
       )}
@@ -277,139 +267,123 @@ const SideBar = ({
   );
 };
 
-// memo로 감싸 최적화
 const MemoizedSideBar = memo(SideBar);
 
-export interface Post {
-    id?: string;
-    markdown: string;
-    imagesURL:string[],
-  }
-
 // ─────────────────────────────────────────────────────────────
-// Editor 컴포넌트 메모화
+// Editor 컴포넌트
 // ─────────────────────────────────────────────────────────────
-const Editor = ({ currentMenu,setCurrentMenu,handleSaveMenu }: { currentMenu: Menu ,setCurrentMenu:Dispatch<SetStateAction<Menu>>}) => {
-  const [isFetch,setIsFetch] = useState(false)
-  
+const Editor = ({
+  currentMenu,
+  setCurrentMenu,
+  handleSaveMenu,
+}: {
+  currentMenu: Menu;
+  setCurrentMenu: Dispatch<SetStateAction<Menu>>;
+  handleSaveMenu: (value: string) => void;
+}) => {
+  const [isFetch, setIsFetch] = useState(false);
   const [post, setPost] = useState<Post>({
     id: currentMenu.id,
-    markdown: ``,
-    imagesURL:[]
+    markdown: "",
+    imagesURL: [],
   });
   const editorRef = useRef(null);
 
-
- const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-   setCurrentMenu(prev => ({ ...prev, name: value }))
-   handleSaveMenu(value)
+    // 메뉴 이름 로컬 상태
+    setCurrentMenu((prev) => ({ ...prev, name: value }));
+    // 디바운스 업데이트
+    handleSaveMenu(value);
   };
-
-  
 
   const callAPI = async () => {
     try {
-      setIsFetch(false)
-      
-      
-      const newPost = await getPost(currentMenu.id as string)
-      console.log(newPost);
-      
-      setPost(newPost)
+      setIsFetch(false);
+      const newPost = await getPost(currentMenu.id as string);
+      setPost(newPost);
     } catch (error) {
       console.log(error);
-      
     } finally {
-      setIsFetch(true)
+      setIsFetch(true);
     }
-  }
-  
- const extractFileName =(fileUrl: string): string | null  =>{
-  try {
-    const decodedUrl = decodeURIComponent(fileUrl); // URL 디코딩
-    const match = decodedUrl.match(/\/o\/([^?]+)/); // "o/" 이후의 경로 추출
+  };
 
-    if (match && match[1]) {
-      return match[1]; // "images/파일명" 반환
+  // 이미지 파일명 추출 함수
+  const extractFileName = (fileUrl: string): string | null => {
+    try {
+      const decodedUrl = decodeURIComponent(fileUrl);
+      const match = decodedUrl.match(/\/o\/([^?]+)/);
+      if (match && match[1]) {
+        return match[1];
+      }
+      return null;
+    } catch (error) {
+      console.error("Error extracting file name:", error);
+      return null;
     }
-    return null;
-  } catch (error) {
-    console.error("Error extracting file name:", error);
-    return null;
-  }
-}
+  };
 
-
+  // 게시글 (Post) 업데이트
   const onClickUpdatePost = async () => {
     try {
-
       const urlRegex = /https?:\/\/[^\s)]+/g;
-      // MDX IMG URL 추출출
+      // 마크다운 내 IMG URL 추출
       const extractedUrls = post.markdown.match(urlRegex) || [];
-      const cleanedUrls = extractedUrls.map(url => url.replace(/\\&/g, "&"));
-      //사용되지 않은 IMG URL
-      const netuseImagesURL = post.imagesURL.filter(item => cleanedUrls.indexOf(item) === -1)
-      const extractFileNames = netuseImagesURL.map(item => extractFileName(item))
-      if (extractFileNames.length > 0) {
-        await deleteFiles(extractFileNames)
-      }
-      
-      
+      const cleanedUrls = extractedUrls.map((url) => url.replace(/\\&/g, "&"));
 
-      await updatePosts(post.id,{markdown:post.markdown,imagesURL:[...cleanedUrls]})
-      
+      // 사용되지 않는 이미지를 서버에서 정리
+      const notUsedImages = post.imagesURL.filter(
+        (item) => cleanedUrls.indexOf(item) === -1
+      );
+      const deleteFileNames = notUsedImages.map((item) => extractFileName(item));
+
+      if (deleteFileNames.length > 0) {
+        await deleteFiles(deleteFileNames);
+      }
+
+      await updatePosts(post.id, {
+        markdown: post.markdown,
+        imagesURL: [...cleanedUrls],
+      });
     } catch (error) {
       console.log(error);
-      
     }
-  }
+  };
 
   useEffect(() => {
-    console.log(post);
-    
-  },[post])
-
-  useEffect(() => {
-    if(!currentMenu) return
-    callAPI()
-    //setPost(newPost)
-  },[currentMenu])
-
+    if (!currentMenu) {return;}
+    callAPI();
+  }, [currentMenu]);
 
   return (
-    <div className=" flex flex-col p-4 flex-1 gap-4 ">
-      <div className=" flex justify-between">
+    <div className={styles.editorContainer}>
+      <div className={styles.editorHeader}>
         <input
-          className=" text-4xl font-bold outline-none"
+          className={styles.editorTitle}
           value={currentMenu.name}
           onChange={handleChange}
           placeholder="새 페이지"
         />
-        <div className=" h-full flex gap-2">
-          <button
-            onClick={onClickUpdatePost}
-            className="h-full text-l  p-1 rounded-lg font-bold bg-blue-500 text-white">
-          저장
-        </button>
-        <button className="h-full text-l  p-1 rounded-lg font-bold bg-red-500 text-white">
-          삭제
-        </button>
-        <button className="h-full text-l  p-1 rounded-lg font-bold bg-gray-300 text-gray-700">
-          게시
-        </button>
-
+        <div className={styles.editorButtonsContainer}>
+          <button onClick={onClickUpdatePost} className={styles.editorBtnSave}>
+            저장
+          </button>
+          <button className={styles.editorBtnDelete}>삭제</button>
+          <button className={styles.editorBtnPublish}>게시</button>
         </div>
-      
       </div>
-      <div className=" overflow-auto h-[92vh] bg-gray-100">
-        {isFetch && 
-        <ForwardRefEditor   markdown={post.markdown} onChange={(markdown) => setPost(prev => ({...prev,markdown})) } ref={editorRef} />
-        }
+      <div className={styles.editorContent}>
+        {isFetch && (
+          <ForwardRefEditor
+            markdown={post.markdown}
+            onChange={(markdown) => setPost((prev) => ({ ...prev, markdown }))}
+            ref={editorRef}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-// memo로 감싸 최적화
 const MemoizedEditor = memo(Editor);
