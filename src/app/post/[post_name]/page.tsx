@@ -2,6 +2,8 @@ import { getMenu, getPost } from "@/api";
 import PostFrame from "@/app/_components/frame/PostFrame";
 import { Metadata } from "next";
 import ClientPage from "./ClientPage";
+import { serialize } from "next-mdx-remote/serialize";
+import remarkGfm from "remark-gfm";
 
 export const metadata: Metadata = {
   title: "아트자석-자석판촉물",
@@ -28,13 +30,16 @@ const Post =  async(props) => {
   const menu = await getMenu();
   const data = await props.params.post_name;
   const urlMenu=  findItemWithMenuAndCategory(menu,decodeURIComponent(data));
-  console.log(urlMenu);
   const post = await getPost(urlMenu?.categories?.id ?? urlMenu?.menu.id);
-  console.log(post);
-
+  const mdxSource = await serialize(post.markdown, {
+    mdxOptions: {
+      remarkPlugins: [remarkGfm],
+    }
+  });
+  console.log(mdxSource);
 
   return <PostFrame menu={menu} urlMenu={urlMenu} >
-    <ClientPage post={post} />
+    <ClientPage source={mdxSource} />
   </PostFrame>;
 };
 
