@@ -2,6 +2,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SlArrowLeft, SlArrowRight } from "react-icons/sl";
+import style from "./style.module.css";
+import classNames from "classnames";
 
 const Header = ({ menu,urlMenu }: {
     menu: Menu[],
@@ -25,25 +27,30 @@ const Header = ({ menu,urlMenu }: {
 
 
   return (
-    <>
-      <div className=" border-b border-solid border-b-gray-200   ">
-        <div className="w-full flex gap-2 p-3 max-w-[1280px] m-auto">
-          <div className="flex gap-2 items-center">
-            {/* <SlArrowLeft className="cursor-pointer"/> */}
-            <div className=" cursor-pointer flex flex-1 w-full  items-center gap-2">
-              <span className="text-xl hover:underline  hover:underline-offset-8" onClick={() => router.push("/")}>홈</span>
-              <span className="text-xl hover:underline  hover:underline-offset-8">둘러보기</span>
-              {menu.map(item => <div key={item.id} onClick={() => onClickMenu(item)}><span className="text-xl hover:underline  hover:underline-offset-8">{item.name}</span></div>)}
-            </div>
-            {/* <SlArrowRight className="cursor-pointer"/>  */}
+    <div className={style.container}>
+
+      <div className={style.headerGroup}>
+        <span className={style.menuText}>{currentCategory?.name ?? currentMenu?.name ?? "홈"}</span>
+        <span className={style.menuText}>|</span>
+        <div className={style.hadereBox}>
+          <button>
+            <SlArrowLeft className="cursor-pointer"/>
+          </button>
+          <div className={style.hadereItem}>
+            <span className={style.menuText} onClick={() => router.push("/")}>홈</span>
+            {menu.map(item => <div key={item.id} onClick={() => onClickMenu(item)}><span className={style.menuText}>{item.name}</span></div>)}
+            <span className={style.menuText} onClick={() => router.push("/map")}>오시는길</span>
           </div>
+          <button>
+            <SlArrowRight className="cursor-pointer"/>
+          </button>
         </div>
-        {/* <h1 className=" cursor-pointer text-2xl" onClick={()=>router.push('/')}>아트자석</h1> */}
-
-
       </div>
-      {currentMenu?.categories?.length >0 && <div className=" border-b border-solid border-b-gray-200 ">
-        <div className="w-full p-3 flex gap-2 max-w-[1280px] m-auto " >
+      {/* <h1 className=" cursor-pointer text-2xl" onClick={()=>router.push('/')}>아트자석</h1> */}
+
+      {  currentMenu?.categories?.length > 0 &&
+
+        <div className={style.categorieGroup} >
           {currentMenu?.categories?.map(item => (<button
             key={item.id}
             onClick={() => onClickCategories(item)}
@@ -53,10 +60,12 @@ const Header = ({ menu,urlMenu }: {
 
         </div>
 
-      </div>}
+      }
+
+    </div>
 
 
-    </>
+
 
   );
 };

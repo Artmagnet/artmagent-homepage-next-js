@@ -3,14 +3,14 @@ import ClientPage from "./ClientPage";
 import PostFrame from "./_components/frame/PostFrame";
 
 export default async function Main() {
-    const menu =  await getMenu();
-    
+  const menu =  await getMenu();
 
-    return (
-        <PostFrame menu={menu} >
-            <ClientPage />
-        </PostFrame>
-    )
-    
-    
+
+  return (
+    <PostFrame menu={menu} >
+      <ClientPage />
+    </PostFrame>
+  );
+
+
 }

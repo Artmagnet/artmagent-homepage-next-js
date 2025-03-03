@@ -1,0 +1,23 @@
+.container {
+  @apply border-b border-solid border-b-gray-200;
+}
+
+.headerGroup {
+  @apply items-center w-full flex gap-5 p-[10px] max-w-[1280px] m-auto;
+}
+
+.hadereBox {
+  @apply flex gap-2 items-center;
+}
+
+.hadereItem {
+  @apply cursor-pointer p-3 gap-3 flex flex-1 w-full  items-center gap-2;
+}
+
+.menuText {
+  @apply text-[22px] text-xl hover:underline  hover:underline-offset-8;
+}
+
+.categorieGroup {
+  @apply w-full p-3 flex gap-2 max-w-[1280px] m-auto;
+}
