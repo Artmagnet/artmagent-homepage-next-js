@@ -3146,6 +3146,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/geojson@npm:*":
+  version: 7946.0.16
+  resolution: "@types/geojson@npm:7946.0.16"
+  checksum: 10c0/1ff24a288bd5860b766b073ead337d31d73bdc715e5b50a2cee5cb0af57a1ed02cc04ef295f5fa68dc40fe3e4f104dd31282b2b818a5ba3231bc1001ba084e3c
+  languageName: node
+  linkType: hard
+
 "@types/hast@npm:^3.0.0":
   version: 3.0.4
   resolution: "@types/hast@npm:3.0.4"
@@ -3227,6 +3234,15 @@ __metadata:
   version: 2.1.0
   resolution: "@types/ms@npm:2.1.0"
   checksum: 10c0/5ce692ffe1549e1b827d99ef8ff71187457e0eb44adbae38fdf7b9a74bae8d20642ee963c14516db1d35fa2652e65f47680fdf679dcbde52bbfadd021f497225
+  languageName: node
+  linkType: hard
+
+"@types/navermaps@npm:^3.7.9":
+  version: 3.7.9
+  resolution: "@types/navermaps@npm:3.7.9"
+  dependencies:
+    "@types/geojson": "npm:*"
+  checksum: 10c0/f97549153f8d66d707a242eff198458d6c92813070d44a418d293b401cb3d61a68a8bcf3aee96964ed273b7f88675f6805d65239b9f4ff802bf24c45b26750e0
   languageName: node
   linkType: hard
 
@@ -4346,7 +4362,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dequal@npm:^2.0.0, dequal@npm:^2.0.2":
+"dequal@npm:^2.0.0, dequal@npm:^2.0.2, dequal@npm:^2.0.3":
   version: 2.0.3
   resolution: "dequal@npm:2.0.3"
   checksum: 10c0/f98860cdf58b64991ae10205137c0e97d384c3a4edc7f807603887b7c4b850af1224a33d88012009f150861cbee4fa2d322c4cc04b9313bee312e47f6ecaa888
@@ -7679,6 +7695,7 @@ __metadata:
     "@mdxeditor/editor": "npm:^3.20.0"
     "@next/mdx": "npm:^15.1.6"
     "@types/lodash": "npm:^4.17.15"
+    "@types/navermaps": "npm:^3.7.9"
     "@types/node": "npm:^20"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
@@ -7703,6 +7720,7 @@ __metadata:
     react-dom: "npm:^19.0.0"
     react-icons: "npm:^5.4.0"
     remark-gfm: "npm:^4.0.1"
+    swr: "npm:^2.3.3"
     tailwindcss: "npm:^3.4.1"
     typescript: "npm:^5"
     uuid: "npm:^11.0.5"
@@ -9404,6 +9422,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"swr@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "swr@npm:2.3.3"
+  dependencies:
+    dequal: "npm:^2.0.3"
+    use-sync-external-store: "npm:^1.4.0"
+  peerDependencies:
+    react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/882fc8291912860e0c50eae3470ebf0cd58b0144cb12adcc4b14c5cef913ea06479043830508d8b0b3d4061d99ad8dd52485c9c879fbd4e9b893484e6d8da9e3
+  languageName: node
+  linkType: hard
+
 "synckit@npm:^0.9.1":
   version: 0.9.2
   resolution: "synckit@npm:0.9.2"
@@ -9859,6 +9889,15 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/161599bf921cfaa41c85d2b01c871975ee99260f3e874c2d41c05890d41170297bdcf314bc5185e7a700de2034ac5b888e3efc8e9f35724f4918f53538d717c9
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "use-sync-external-store@npm:1.4.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/ec011a5055962c0f6b509d6e78c0b143f8cd069890ae370528753053c55e3b360d3648e76cfaa854faa7a59eb08d6c5fb1015e60ffde9046d32f5b2a295acea5
   languageName: node
   linkType: hard
 

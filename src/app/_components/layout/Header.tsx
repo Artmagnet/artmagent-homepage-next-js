@@ -39,7 +39,7 @@ const Header = ({ menu,urlMenu }: {
           <div className={style.hadereItem}>
             <span className={style.menuText} onClick={() => router.push("/")}>홈</span>
             {menu.map(item => <div key={item.id} onClick={() => onClickMenu(item)}><span className={style.menuText}>{item.name}</span></div>)}
-            <span className={style.menuText} onClick={() => router.push("/map")}>오시는길</span>
+            <span className={style.menuText} onClick={() => router.push("/post/map")}>오시는길</span>
           </div>
           <button>
             <SlArrowRight className="cursor-pointer"/>

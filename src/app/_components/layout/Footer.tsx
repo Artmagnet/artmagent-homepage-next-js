@@ -1,6 +1,4 @@
-import { FaInstagram } from "react-icons/fa6";
 import style from "./footerStyle.module.css";
-import { CiYoutube } from "react-icons/ci";
 
 const Footer = () => {
   return (
