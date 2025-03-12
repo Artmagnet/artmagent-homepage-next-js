@@ -8,17 +8,10 @@ import React, {
   useState,
   memo,
 } from "react";
-import classNames from "classnames";
 import { ForwardRefEditor } from "./_components/ForwardRefEditor";
 
-import { deleteDoc, doc, setDoc } from "firebase/firestore";
-import { db } from "@/util/firebaseClient";
-import { v4 as uuidv4 } from "uuid";
-import { FaRegTrashCan } from "react-icons/fa6";
-import { CgMathPlus } from "react-icons/cg";
 import { debounce } from "lodash";
 import {
-  createPost,
   deleteFiles,
   getMenu,
   getPost,
@@ -28,6 +21,8 @@ import {
 } from "@/api";
 
 import styles from "./style.module.css";
+import SideBar from "./_components/Sidebar";
+import Setting from "./_components/Setting";
 
 export interface Menu {
   id: string;
@@ -76,198 +71,22 @@ export const ClientPage = ({ menus }: { menus: Menu[] }) => {
         currentMenu={currentMenu}
         setCurrentMenu={setCurrentMenu}
       />
-      {currentMenu && (
+      {currentMenu ?(
         <MemoizedEditor
           currentMenu={currentMenu}
           setCurrentMenu={setCurrentMenu}
           handleSaveMenu={handleSaveMenu}
         />
-      )}
+      ):(<Setting/>)}
     </div>
   );
 };
 
-// ─────────────────────────────────────────────────────────────
-// SideBar 컴포넌트
-// ─────────────────────────────────────────────────────────────
-const SideBar = ({
-  menu,
-  setMenu,
-  currentMenu,
-  setCurrentMenu,
-}: {
-  menu: Menu[];
-  setMenu: Dispatch<SetStateAction<Menu[]>>;
-  currentMenu: Menu | undefined;
-  setCurrentMenu: Dispatch<SetStateAction<Menu | undefined>>;
-}) => {
-  const createMenu = async (menuId?: string | number) => {
-    const id = uuidv4();
-    let newPage = {
-      id,
-      name: "새 페이지",
-      timeStamp: new Date().toISOString(),
-      active: false,
-    };
 
-    try {
-      // (1) 하위 카테고리 생성
-      if (menuId) {
-        const menuCopy = [...menu];
-        const index = menuCopy.findIndex((item) => item.id === menuId);
-        if (index >= 0) {
-          const parentId = menuCopy[index].id; // 상위 메뉴 id
-          newPage = { ...newPage, menuId: parentId };
-
-          // Firebase 저장
-          await setDoc(doc(db, "menus", parentId, "categories", id), {
-            ...newPage,
-          });
-          // 로컬 state 업데이트
-          if (menuCopy[index]?.categories) {
-            menuCopy[index].categories.push(newPage);
-          } else {
-            menuCopy[index].categories = [newPage];
-          }
-          // 문서(게시글)도 생성
-          await createPost(id);
-          setMenu(menuCopy);
-          setCurrentMenu(newPage);
-        }
-        return;
-      }
-
-      // (2) 최상위 메뉴 생성
-      await setDoc(doc(db, "menus", id), newPage);
-      // 문서(게시글)도 생성
-      await createPost(id);
-
-      setMenu((prev) => [...prev, { ...newPage }]);
-      setCurrentMenu(newPage);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // 클릭한 메뉴를 currentMenu에 저장
-  const onClickSelect = (item: Menu) => {
-    setCurrentMenu(item);
-  };
-
-  // 메뉴/카테고리 삭제
-  const onClickRemoveMenu = async (menuId: string, categorieId?: string) => {
-    try {
-      if (categorieId) {
-        // 하위 카테고리 삭제
-        const menuCopy = [...menu];
-        const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
-        if (menuIndex === -1) {return;}
-
-        const filtered = menuCopy[menuIndex].categories?.filter(
-          (item) => item.id !== categorieId
-        );
-        menuCopy[menuIndex].categories = filtered || [];
-
-        await deleteDoc(doc(db, "menus", menuId, "categories", categorieId));
-        setMenu(menuCopy);
-        return;
-      }
-
-      // 최상위 메뉴 삭제
-      await deleteDoc(doc(db, "menus", menuId));
-      setMenu((prev) => prev.filter((item) => item.id !== menuId));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return (
-    <div className={styles.sideBarContainer}>
-      <div className={styles.sidebarHeader}>
-        <span className={styles.sidebarHeaderTitle}>아트자석</span>
-        <button
-          className={styles.sidebarHeaderButton}
-          onClick={() => createMenu()}
-        >
-          <CgMathPlus />
-        </button>
-      </div>
-
-      {menu.length > 0 ? (
-        <>
-          {menu.map((item) => (
-            <div key={item.id} className={styles.menuWrapper}>
-              {/* ─── 최상위 메뉴 ───────────────────────────── */}
-              <div
-                className={classNames(styles.menuButton, {
-                  [styles.menuButtonActive]: currentMenu?.id === item.id,
-                })}
-                onClick={() => onClickSelect(item)}
-              >
-                <span>{item.name}</span>
-                <div className="flex gap-2 items-center">
-                  <button
-                    className={styles.sidebarHeaderButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClickRemoveMenu(item.id);
-                    }}
-                  >
-                    <FaRegTrashCan />
-                  </button>
-                  <button
-                    className={styles.sidebarHeaderButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      createMenu(item.id);
-                    }}
-                  >
-                    <CgMathPlus />
-                  </button>
-                </div>
-              </div>
-
-              {/* ─── 하위 카테고리 ─────────────────────────── */}
-              {item.categories?.length ? (
-                <ul className={styles.subMenuList}>
-                  {item.categories.map((sub) => (
-                    <li key={sub.id}>
-                      <div
-                        className={classNames(styles.menuButton, {
-                          [styles.menuButtonActive]: currentMenu?.id === sub.id,
-                        })}
-                        onClick={() => onClickSelect(sub)}
-                      >
-                        <span>{sub.name}</span>
-                        <div className="flex gap-2 items-center">
-                          <button
-                            className={styles.sidebarHeaderButton}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onClickRemoveMenu(item.id, sub.id);
-                            }}
-                          >
-                            <FaRegTrashCan />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ))}
-        </>
-      ) : (
-        <div className={styles.emptyMenu}>
-          <span>메뉴를 만들어 주세요.</span>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const MemoizedSideBar = memo(SideBar);
+
+
 
 // ─────────────────────────────────────────────────────────────
 // Editor 컴포넌트

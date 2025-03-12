@@ -6,7 +6,6 @@ const Map = async () => {
   const menu = await getMenu();
   return (
     <>
-
       <PostFrame menu={menu}>
         <ClientPage />
       </PostFrame>

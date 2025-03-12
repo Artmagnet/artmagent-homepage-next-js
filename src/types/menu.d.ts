@@ -1,6 +1,8 @@
-interface Menu {
+ declare interface Menu {
+  id: string;
   name: string;
+  menuId?: string | number;
+  active?: boolean;
   categories?: Menu[];
-  id?: string;
-  menuId?: string;
+  timeStamp?: string;
 }

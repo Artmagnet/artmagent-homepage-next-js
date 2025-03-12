@@ -1,0 +1,23 @@
+.container {
+  @apply flex flex-1 flex-col p-8 gap-3 text-base;
+}
+
+.contentsGroup {
+  @apply flex flex-1 flex-col p-8 gap-3 text-base border-solid border-gray-200 border rounded-lg;
+}
+
+.inputGroup {
+  @apply flex flex-col gap-2;
+}
+
+.label {
+  @apply text-base;
+}
+
+.input {
+  @apply text-lg rounded-sm px-2 py-1 border-solid border-gray-300 border;
+}
+
+.title {
+  @apply text-2xl font-semibold;
+}
