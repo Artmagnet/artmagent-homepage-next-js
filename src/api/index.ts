@@ -1,9 +1,48 @@
 import { db, storage } from "@/util/firebaseClient";
-import { getDocs, collection, updateDoc, doc, setDoc, getDoc } from "firebase/firestore";
-import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import {
+  getDocs,
+  collection,
+  updateDoc,
+  doc,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+
+/**세팅 가져오기 */
+export async function getCompanyInfo(): Promise<any> {
+  try {
+    const infoSnapshot = await getDocs(collection(db, "info"));
+    const doc = infoSnapshot.docs.map((doc) => {
+      return { id: doc.id, ...doc.data() };
+    });
+
+    return doc[0];
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/** 세팅 업데이트 */
+export async function updateCompanyInfo(
+  infoId: string,
+  updatedData: CompanyInfo
+) {
+  try {
+    const menuRef = doc(db, "info", infoId);
+    await updateDoc(menuRef, updatedData);
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 /**메뉴 가져오기 */
-export async function getMenu() {
+export async function getMenu(): Promise<any> {
   try {
     const menusSnapshot = await getDocs(collection(db, "menus"));
 
@@ -32,22 +71,23 @@ export async function getMenu() {
 }
 
 /**메뉴 업데이트 */
-export async function updateMenu(menuId:string, updatedData:object) {
+export async function updateMenu(menuId: string, updatedData: object) {
   try {
-      console.log(menuId, updatedData);
-      
-      const menuRef = doc(db, "menus", menuId);
-      await updateDoc(menuRef, updatedData);
-    
+    console.log(menuId, updatedData);
 
+    const menuRef = doc(db, "menus", menuId);
+    await updateDoc(menuRef, updatedData);
   } catch (error) {
     console.log(error);
-    
   }
 }
 
 /** 카테고리 업데이트 */
-export async function updateCategory(menuId:string, categoryId:string, updatedData:object) {
+export async function updateCategory(
+  menuId: string,
+  categoryId: string,
+  updatedData: object
+) {
   try {
     const categoryRef = doc(db, "menus", menuId, "categories", categoryId);
     await updateDoc(categoryRef, updatedData);
@@ -58,10 +98,9 @@ export async function updateCategory(menuId:string, categoryId:string, updatedDa
 }
 
 export async function createPost(postId: string) {
-  const postRef = doc(db, 'posts', postId)
-  await setDoc(postRef,{markdown:``})
+  const postRef = doc(db, "posts", postId);
+  await setDoc(postRef, { markdown: `` });
 }
-
 
 export async function getPost(postId: string) {
   try {
@@ -81,21 +120,16 @@ export async function getPost(postId: string) {
 }
 export async function updatePosts(postId: string, updatedData: object) {
   try {
-     console.log(postId,updatedData);
-  
-  const postRef = doc(db, 'posts', postId)
-   await updateDoc(postRef, updatedData);
+    console.log(postId, updatedData);
+
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, updatedData);
   } catch (error) {
     console.log(error);
-    
   }
- 
-  
 }
 
-
-
-export async function uploadFile (file:File) {
+export async function uploadFile(file: File) {
   if (!file) return;
 
   const storageRef = ref(storage, `images/${file.name}`); // 파일 경로 설정 (images 폴더 안에 저장)
@@ -103,11 +137,13 @@ export async function uploadFile (file:File) {
   const uploadTask = uploadBytesResumable(storageRef, file);
 
   return new Promise((resolve, reject) => {
-    uploadTask.on('state_changed',
+    uploadTask.on(
+      "state_changed",
       (snapshot) => {
         // 업로드 진행 상황 관찰 (옵션)
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log('Upload is ' + progress + '% done');
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("Upload is " + progress + "% done");
         // ...
       },
       (error) => {
@@ -122,9 +158,7 @@ export async function uploadFile (file:File) {
       }
     );
   });
-};
-
-
+}
 
 export async function deleteFile(fileName: string) {
   if (!fileName) return;

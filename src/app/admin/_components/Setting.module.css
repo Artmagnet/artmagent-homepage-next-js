@@ -21,3 +21,10 @@
 .title {
   @apply text-2xl font-semibold;
 }
+.editorBtnSave {
+  @apply h-full text-lg p-1 rounded-lg font-bold bg-blue-500 text-white;
+}
+
+.headerGroup {
+  @apply flex justify-between;
+}

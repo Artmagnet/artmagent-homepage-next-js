@@ -1,18 +1,16 @@
 "use client";
 import useEmblaCarousel from "embla-carousel-react";
 import SummeryCard from "./_components/SummeryCard/SummeryCard";
-import style from "./style.module.css";
 import { useCallback, useEffect, useState } from "react";
-
-
-
+import style from "./style.module.css"; // SummeryCard 그룹에만 적용된 스타일이 있다면 유지
 
 const ClientPage = () => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ "loop":true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const slides = ["Slide 1", "Slide 2", "Slide 3"];
+
   useEffect(() => {
-    if (!emblaApi) {return;}
+    if (!emblaApi) return;
 
     const onSelect = () => {
       setSelectedIndex(emblaApi.selectedScrollSnap());
@@ -24,97 +22,45 @@ const ClientPage = () => {
     };
   }, [emblaApi]);
 
-
   const scrollTo = (index: number) => emblaApi && emblaApi.scrollTo(index);
 
-  return (<div className={style.container}>
+  return (
+    <div className={`${style.container}`}>
+      <div className="w-[1280px] h-[480px] relative text-center mx-auto">
+        <div className="overflow-hidden mx-auto" ref={emblaRef}>
+          <div className="flex">
+            {slides.map((slide, index) => (
+              <div
+                key={index}
+                className="flex-[0_0_100%] p-5 bg-[#ddd] text-[20px] h-[420px] flex items-center justify-center"
+              >
+                {slide}
+              </div>
+            ))}
+          </div>
+        </div>
 
-    <div className="carousel">
-      <div className="embla" ref={emblaRef}>
-        <div className="embla__container">
-          {slides.map((slide, index) => (
-            <div key={index} className="embla__slide">
-              {slide}
-            </div>
+        {/* Dots (페이지네이션) */}
+        <div className="absolute bottom-20 left-0 w-full flex justify-center items-center gap-3">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              className={`w-3 h-3 rounded-full border-none ${
+                index === selectedIndex ? "bg-[#333]" : "bg-[#bbb]"
+              }`}
+              onClick={() => scrollTo(index)}
+            />
           ))}
         </div>
       </div>
 
-      {/* Dots (페이지네이션) */}
-      <div className="dots">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            className={`dot ${index === selectedIndex ? "active" : ""}`}
-            onClick={() => scrollTo(index)}
-          />
-        ))}
+      <div className={style.contentsGroup}>
+        <SummeryCard />
+        <SummeryCard />
+        <SummeryCard />
       </div>
-      <style jsx>{`
-        .carousel {
-          text-align: center;
-          width: 1280px;
-          height:480px;
-          position: relative;
-           
-        }
-        .embla {
-          overflow: hidden;
-          margin: auto;
-
-        }
-        .embla__container {
-          display: flex;
-
-        }
-        .embla__slide {
-          flex: 0 0 100%;
-          padding: 20px;
-          background: #ddd;
-          text-align: center;
-          font-size: 20px;
-          height:420px;
-          align-items: center;
-          display:flex;
-          justify-content: center;
-        }
-         .dots {
-            flex:1;
-          bottom:80px;
-            left:0;
-          display: flex;
-          justify-content: center;
-          position: absolute;
-          gap:12px;
-          width:100%;
-           align-items: center;
-        justify-content: center;
-          
-        }
-        .dot {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: #bbb;
-          border: none;
-          cursor: pointer;
-        }
-        .dot.active {
-          background: #333;
-        }
-        button {
-          cursor: pointer;
-        }
-      `}</style>
     </div>
-    <div className={style.contentsGroup}>
-
-      <SummeryCard/>
-      <SummeryCard/>
-      <SummeryCard/>
-
-    </div>
-  </div>);
+  );
 };
 
 export default ClientPage;

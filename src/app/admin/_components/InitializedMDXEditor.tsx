@@ -1,5 +1,5 @@
-'use client'
-import React, { useEffect, useMemo, useState, type ForwardedRef, memo, Dispatch, SetStateAction } from 'react'
+"use client";
+import React, { useState, type ForwardedRef } from "react";
 import {
   headingsPlugin,
   listsPlugin,
@@ -23,15 +23,10 @@ import {
   BlockTypeSelect,
   ChangeAdmonitionType,
   ChangeCodeMirrorLanguage,
-  CodeToggle,
   ConditionalContents,
   DiffSourceToggleWrapper,
   InsertAdmonition,
-  InsertCodeBlock,
-  InsertFrontmatter,
-  InsertSandpack,
   ShowSandpackInfo,
-  StrikeThroughSupSubToggles,
   EditorInFocus,
   DirectiveNode,
   AdmonitionDirectiveDescriptor,
@@ -44,61 +39,56 @@ import {
   linkPlugin,
   sandpackPlugin,
   SandpackConfig,
-  DirectiveDescriptor
-} from '@mdxeditor/editor'
-import '@mdxeditor/editor/style.css'
-import './InitializedMDXEditor.modle.css'
+  DirectiveDescriptor,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+import "./InitializedMDXEditor.modle.css";
 
-import { LeafDirective } from 'mdast-util-directive'
+import { LeafDirective } from "mdast-util-directive";
 
-import 'lexical'
-import { AdmonitionKind } from 'lexical'
-import { uploadFile } from '@/api'
-import { Post } from '../ClientPage'
-
+import "lexical";
+import { AdmonitionKind } from "lexical";
+import { uploadFile } from "@/api";
 
 // Only import this to the next file
 export default function InitializedMDXEditor({
   editorRef,
-    ...props
+  ...props
 }: {
   editorRef: ForwardedRef<MDXEditorMethods> | null;
- } & MDXEditorProps) {
-
-  const [selectFormatting, setSelectFormatting] = useState('title_1');
+} & MDXEditorProps) {
+  const [selectFormatting, setSelectFormatting] = useState("title_1");
 
   const [fontFormatting, setFontFormatting] = useState([
-    { label: '제목1', value: 'title_1' },
-    { label: '제목2', value: 'title_2' },
-    { label: '제목3', value: 'title_3' },
-    { label: '본문1', value: 'text_1' }
+    { label: "제목1", value: "title_1" },
+    { label: "제목2", value: "title_2" },
+    { label: "제목3", value: "title_3" },
+    { label: "본문1", value: "text_1" },
   ]);
 
   const onChangeSelect = (value: string) => {
-    const fontFormat = fontFormatting.find(item => item.value === value);
+    const fontFormat = fontFormatting.find((item) => item.value === value);
     setSelectFormatting(fontFormat?.value as string);
   };
 
-  
-  const imageUploadHandler = async (file:File):Promise<unknown> => {
-    
-    const res = await uploadFile(file)
-   
-    
-    return Promise.resolve(res)
-  }
+  const imageUploadHandler = async (file: File): Promise<unknown> => {
+    const res = await uploadFile(file);
+
+    return Promise.resolve(res);
+  };
 
   return (
     <MDXEditor
-      plugins={[...ALL_PLUGINS,  imagePlugin({
-        imageUploadHandler,
-        
-      })]}
+      plugins={[
+        ...ALL_PLUGINS,
+        imagePlugin({
+          imageUploadHandler,
+        }),
+      ]}
       {...props}
       ref={editorRef}
-      className='editor'
-     contentEditableClassName="prose"
-
+      className="editor"
+      contentEditableClassName="prose"
     />
   );
 }
@@ -115,90 +105,97 @@ export default function App() {
 `.trim();
 
 export const virtuosoSampleSandpackConfig: SandpackConfig = {
-  defaultPreset: 'react',
+  defaultPreset: "react",
   presets: [
     {
-      label: 'React',
-      name: 'react',
-      meta: 'live react',
-      sandpackTemplate: 'react',
-      sandpackTheme: 'light',
-      snippetFileName: '/App.js',
-      snippetLanguage: 'jsx',
-      initialSnippetContent: defaultSnippetContent
+      label: "React",
+      name: "react",
+      meta: "live react",
+      sandpackTemplate: "react",
+      sandpackTheme: "light",
+      snippetFileName: "/App.js",
+      snippetLanguage: "jsx",
+      initialSnippetContent: defaultSnippetContent,
     },
     {
-      label: 'React',
-      name: 'react',
-      meta: 'live',
-      sandpackTemplate: 'react',
-      sandpackTheme: 'light',
-      snippetFileName: '/App.js',
-      snippetLanguage: 'jsx',
-      initialSnippetContent: defaultSnippetContent
+      label: "React",
+      name: "react",
+      meta: "live",
+      sandpackTemplate: "react",
+      sandpackTheme: "light",
+      snippetFileName: "/App.js",
+      snippetLanguage: "jsx",
+      initialSnippetContent: defaultSnippetContent,
     },
     {
-      label: 'Virtuoso',
-      name: 'virtuoso',
-      meta: 'live virtuoso',
-      sandpackTemplate: 'react-ts',
-      sandpackTheme: 'light',
-      snippetFileName: '/App.tsx',
+      label: "Virtuoso",
+      name: "virtuoso",
+      meta: "live virtuoso",
+      sandpackTemplate: "react-ts",
+      sandpackTheme: "light",
+      snippetFileName: "/App.tsx",
       initialSnippetContent: defaultSnippetContent,
       dependencies: {
-        'react-virtuoso': 'latest',
-        '@ngneat/falso': 'latest'
+        "react-virtuoso": "latest",
+        "@ngneat/falso": "latest",
       },
-      files: {}
-    }
-  ]
+      files: {},
+    },
+  ],
 };
 
 interface YoutubeDirectiveNode extends LeafDirective {
-  name: 'youtube';
+  name: "youtube";
   attributes: { id: string };
 }
 
-export const YoutubeDirectiveDescriptor: DirectiveDescriptor<YoutubeDirectiveNode> = {
-  name: 'youtube',
-  type: 'leafDirective',
-  testNode(node) {
-    return node.name === 'youtube';
-  },
-  attributes: ['id'],
-  hasChildren: false,
-  Editor: ({ mdastNode, lexicalNode, parentEditor }) => {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        <button
-          onClick={() => {
-            parentEditor.update(() => {
-              lexicalNode.selectNext();
-              lexicalNode.remove();
-            });
+export const YoutubeDirectiveDescriptor: DirectiveDescriptor<YoutubeDirectiveNode> =
+  {
+    name: "youtube",
+    type: "leafDirective",
+    testNode(node) {
+      return node.name === "youtube";
+    },
+    attributes: ["id"],
+    hasChildren: false,
+    Editor: ({ mdastNode, lexicalNode, parentEditor }) => {
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
           }}
         >
-          delete
-        </button>
-        <iframe
-          width="560"
-          height="315"
-          src={`https://www.youtube.com/embed/${mdastNode.attributes.id}`}
-          title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        ></iframe>
-      </div>
-    );
-  }
-};
+          <button
+            onClick={() => {
+              parentEditor.update(() => {
+                lexicalNode.selectNext();
+                lexicalNode.remove();
+              });
+            }}
+          >
+            delete
+          </button>
+          <iframe
+            width="560"
+            height="315"
+            src={`https://www.youtube.com/embed/${mdastNode.attributes.id}`}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          ></iframe>
+        </div>
+      );
+    },
+  };
 
 function whenInAdmonition(editorInFocus: EditorInFocus | null) {
   const node = editorInFocus?.rootNode;
-  if (!node || node.getType() !== 'directive') {
+  if (!node || node.getType() !== "directive") {
     return false;
   }
-  return ['note', 'tip', 'danger', 'info', 'caution'].includes(
+  return ["note", "tip", "danger", "info", "caution"].includes(
     (node as DirectiveNode).getMdastNode().name as AdmonitionKind
   );
 }
@@ -212,12 +209,12 @@ export const KitchenSinkToolbar: React.FC = () => {
       <ConditionalContents
         options={[
           {
-            when: (editor) => editor?.editorType === 'codeblock',
-            contents: () => <ChangeCodeMirrorLanguage />
+            when: (editor) => editor?.editorType === "codeblock",
+            contents: () => <ChangeCodeMirrorLanguage />,
           },
           {
-            when: (editor) => editor?.editorType === 'sandpack',
-            contents: () => <ShowSandpackInfo />
+            when: (editor) => editor?.editorType === "sandpack",
+            contents: () => <ShowSandpackInfo />,
           },
           {
             fallback: () => (
@@ -233,8 +230,11 @@ export const KitchenSinkToolbar: React.FC = () => {
                 <Separator />
                 <ConditionalContents
                   options={[
-                    { when: whenInAdmonition, contents: () => <ChangeAdmonitionType /> },
-                    { fallback: () => <BlockTypeSelect /> }
+                    {
+                      when: whenInAdmonition,
+                      contents: () => <ChangeAdmonitionType />,
+                    },
+                    { fallback: () => <BlockTypeSelect /> },
                   ]}
                 />
                 <Separator />
@@ -255,20 +255,20 @@ export const KitchenSinkToolbar: React.FC = () => {
                           <Separator />
                           <InsertAdmonition />
                         </>
-                      )
-                    }
+                      ),
+                    },
                   ]}
                 />
                 {/* <Separator />
                 <InsertFrontmatter /> */}
               </>
-            )
-          }
+            ),
+          },
         ]}
       />
     </DiffSourceToggleWrapper>
   );
-}
+};
 
 // 실제 툴바를 MDXEditor에 끼우는 plugin
 export const ALL_PLUGINS = [
@@ -281,10 +281,23 @@ export const ALL_PLUGINS = [
   tablePlugin(),
   thematicBreakPlugin(),
   frontmatterPlugin(),
-  codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
+  codeBlockPlugin({ defaultCodeBlockLanguage: "" }),
   sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-  codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'Plain Text', tsx: 'TypeScript', '': 'Unspecified' } }),
-  directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor, AdmonitionDirectiveDescriptor] }),
-  diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: 'boo' }),
-  markdownShortcutPlugin()
+  codeMirrorPlugin({
+    codeBlockLanguages: {
+      js: "JavaScript",
+      css: "CSS",
+      txt: "Plain Text",
+      tsx: "TypeScript",
+      "": "Unspecified",
+    },
+  }),
+  directivesPlugin({
+    directiveDescriptors: [
+      YoutubeDirectiveDescriptor,
+      AdmonitionDirectiveDescriptor,
+    ],
+  }),
+  diffSourcePlugin({ viewMode: "rich-text", diffMarkdown: "boo" }),
+  markdownShortcutPlugin(),
 ];

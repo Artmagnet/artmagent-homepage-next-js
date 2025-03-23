@@ -7,7 +7,10 @@ import { FaRegTrashCan } from "react-icons/fa6";
 import styles from "../style.module.css";
 import { v4 as uuidv4 } from "uuid";
 import classNames from "classnames";
-import { IoSettingsOutline  } from "react-icons/io5";
+import { IoSettingsOutline } from "react-icons/io5";
+import Logo from "../../../../public/Logo.svg";
+import Image from "next/image";
+
 const SideBar = ({
   menu,
   setMenu,
@@ -18,9 +21,7 @@ const SideBar = ({
   setMenu: Dispatch<SetStateAction<Menu[]>>;
   currentMenu: Menu | undefined;
   setCurrentMenu: Dispatch<SetStateAction<Menu | undefined>>;
-  }) => {
-
-
+}) => {
   const createMenu = async (menuId?: string | number) => {
     const id = uuidv4();
     let newPage = {
@@ -81,7 +82,9 @@ const SideBar = ({
         // 하위 카테고리 삭제
         const menuCopy = [...menu];
         const menuIndex = menuCopy.findIndex((item) => item.id === menuId);
-        if (menuIndex === -1) {return;}
+        if (menuIndex === -1) {
+          return;
+        }
 
         const filtered = menuCopy[menuIndex].categories?.filter(
           (item) => item.id !== categorieId
@@ -104,7 +107,8 @@ const SideBar = ({
   return (
     <div className={styles.sideBarContainer}>
       <div className={styles.sidebarHeader}>
-        <span className={styles.sidebarHeaderTitle}>아트자석</span>
+        <Image src={Logo} alt={"logo"} />
+        {/* <span className={styles.sidebarHeaderTitle}>아트자석</span> */}
         <button
           className={styles.sidebarHeaderButton}
           onClick={() => createMenu()}
@@ -123,7 +127,8 @@ const SideBar = ({
                 onClickRemoveMenu={onClickRemoveMenu}
                 createMenu={createMenu}
                 currentMenu={currentMenu}
-                menu={item} />
+                menu={item}
+              />
               {/* ─── 하위 카테고리 ─────────────────────────── */}
               {item.categories?.length ? (
                 <ul className={styles.subMenuList}>
@@ -134,7 +139,8 @@ const SideBar = ({
                       categorie={categorie}
                       currentMenu={currentMenu}
                       onClickSelect={onClickSelect}
-                      onClickRemoveMenu={onClickRemoveMenu} />
+                      onClickRemoveMenu={onClickRemoveMenu}
+                    />
                   ))}
                 </ul>
               ) : null}
@@ -146,44 +152,50 @@ const SideBar = ({
   );
 };
 
-
 export default SideBar;
 
-
-const SettingCard = ({ currentMenu,setCurrentMenu }:{currentMenu:Menu,setCurrentMenu:Dispatch<SetStateAction<Menu | undefined>>}) => {
+const SettingCard = ({
+  currentMenu,
+  setCurrentMenu,
+}: {
+  currentMenu: Menu;
+  setCurrentMenu: Dispatch<SetStateAction<Menu | undefined>>;
+}) => {
   return (
     <div
-      className={
-        classNames(styles.menuButton, {
-          [styles.menuButtonActive]: currentMenu ===undefined? true:false,
-        })}
-      onClick={()=>setCurrentMenu(undefined)}
+      className={classNames(styles.menuButton, {
+        [styles.menuButtonActive]: currentMenu === undefined ? true : false,
+      })}
+      onClick={() => setCurrentMenu(undefined)}
     >
       <span>설정</span>
       <div className="flex gap-2 items-center">
-        <button
-          className={styles.sidebarHeaderButton}
-        >
-          <IoSettingsOutline  />
+        <button className={styles.sidebarHeaderButton}>
+          <IoSettingsOutline />
         </button>
       </div>
     </div>
   );
 };
 
-const MenuCard = ({ onClickSelect, onClickRemoveMenu, menu,currentMenu,createMenu }: {
-    onClickSelect: (menu: Menu) => void;
-    onClickRemoveMenu: (menuId: string, categorieId?: string) => Promise<void>;
-    createMenu: (menuId?: string) => void;
-    currentMenu?: Menu;
-    menu: Menu;
+const MenuCard = ({
+  onClickSelect,
+  onClickRemoveMenu,
+  menu,
+  currentMenu,
+  createMenu,
+}: {
+  onClickSelect: (menu: Menu) => void;
+  onClickRemoveMenu: (menuId: string, categorieId?: string) => Promise<void>;
+  createMenu: (menuId?: string) => void;
+  currentMenu?: Menu;
+  menu: Menu;
 }) => {
   return (
     <div
-      className={
-        classNames(styles.menuButton, {
-          [styles.menuButtonActive]: currentMenu?.id === menu.id,
-        })}
+      className={classNames(styles.menuButton, {
+        [styles.menuButtonActive]: currentMenu?.id === menu.id,
+      })}
       onClick={() => onClickSelect(menu)}
     >
       <span>{menu.name}</span>
@@ -207,9 +219,9 @@ const MenuCard = ({ onClickSelect, onClickRemoveMenu, menu,currentMenu,createMen
           <CgMathPlus />
         </button>
       </div>
-    </div>);
+    </div>
+  );
 };
-
 
 const CategoryCard = ({
   onClickSelect,
@@ -245,5 +257,6 @@ const CategoryCard = ({
           </button>
         </div>
       </div>
-    </li>);
+    </li>
+  );
 };

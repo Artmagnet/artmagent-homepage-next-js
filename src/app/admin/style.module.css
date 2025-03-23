@@ -7,7 +7,7 @@
    SideBar 관련 스타일
    ─────────────────────────────────────────── */
 .sideBarContainer {
-  @apply flex flex-col border-r border-solid border-gray-200 p-4 bg-gray-100;
+  @apply flex flex-col border-r border-solid border-gray-200 p-4 bg-[#F8F8F7];
 }
 
 .sidebarHeader {
@@ -71,7 +71,7 @@
 }
 
 .editorContent {
-  @apply overflow-auto h-[92vh] bg-gray-100;
+  @apply overflow-auto h-[92vh] border-gray-200 border-solid border rounded-lg;
 }
 
 .emptyMenu {

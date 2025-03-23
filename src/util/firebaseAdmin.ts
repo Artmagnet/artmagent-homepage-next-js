@@ -12,15 +12,10 @@ const firebaseConfig = {
   databaseURL: `https://${process.env.FIREBASE_DATABASE_NAME}.firebaseio.com`,
 };
 
-
-
 // Firebase 앱 초기화
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-
-
 const db = getFirestore(app);
 
-
-export {db}
-export default app
+export { db };
+export default app;
